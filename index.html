@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DigitFlow Analysis</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit Tracker Analysis Tool</title>
 
 <style>
 body {
@@ -14,7 +14,6 @@ body {
   text-align: center;
 }
 
-/* Matrix canvas */
 canvas {
   position: fixed;
   top: 0;
@@ -22,15 +21,19 @@ canvas {
   z-index: 0;
 }
 
-/* UI */
-.container {
+.page {
+  display: none;
   position: relative;
   z-index: 2;
   padding: 20px;
 }
 
+.active {
+  display: block;
+}
+
 button {
-  padding: 10px 20px;
+  padding: 12px 20px;
   background: orange;
   border: none;
   border-radius: 6px;
@@ -38,32 +41,19 @@ button {
   font-weight: bold;
 }
 
+.live { color: lime; }
+.fail { color: red; }
+
+.price {
+  font-size: 28px;
+  color: orange;
+}
+
 select {
   padding: 10px;
-  margin: 10px;
   background: black;
   color: orange;
   border: 1px solid orange;
-}
-
-.price {
-  font-size: 30px;
-  color: orange;
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 5;
 }
 
 .circle {
@@ -74,6 +64,7 @@ select {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: auto;
 }
 
 .freq {
@@ -94,7 +85,16 @@ select {
 
 <canvas id="matrix"></canvas>
 
-<div class="container">
+<!-- PAGE 1 -->
+<div id="page1" class="page active">
+  <h1>Digit Tracker Analysis Tool</h1>
+  <div id="status">Not Connected</div>
+  <button onclick="connect()">Connect WebSocket</button>
+</div>
+
+<!-- PAGE 2 -->
+<div id="page2" class="page">
+
   <h2>Matches / Differs</h2>
 
   <select id="symbol">
@@ -110,97 +110,139 @@ select {
     <option value="1HZ100V">1s Vol 100</option>
   </select>
 
-  <br>
-
-  <button onclick="connect()">CONNECT</button>
-  <button onclick="toggle()">START ANALYSIS</button>
-
   <div class="price" id="price">----</div>
 
-  <div class="freq" id="chart"></div>
-</div>
+  <button onclick="toggle()" id="toggleBtn">START ANALYSIS</button>
 
-<div class="modal" id="modal">
-  <div id="loader">Loading...</div>
+  <div class="circle" id="score">0</div>
 
-  <div id="content" style="display:none;">
-    <div class="circle" id="score">0</div>
-
-    <div style="display:flex; gap:30px; margin-top:20px;">
-      <div>
-        <div class="circle" id="match">0%</div>
-        MATCH
-      </div>
-      <div>
-        <div class="circle" id="diff">0%</div>
-        DIFFERS
-      </div>
+  <div style="display:flex; justify-content:center; gap:30px;">
+    <div>
+      <div class="circle" id="match">0%</div>
+      MATCH
     </div>
-
-    <h3 id="prediction"></h3>
+    <div>
+      <div class="circle" id="diff">0%</div>
+      DIFFERS
+    </div>
   </div>
+
+  <h3 id="prediction"></h3>
+
+  <div class="freq" id="chart"></div>
+
 </div>
 
 <script>
 let ws;
 let ticks = [];
 let analyzing = false;
+let pingInterval;
 
-// 🔌 Connect
+// ✅ YOUR APP ID EMBEDDED HERE
+const WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=131595";
+
+// CONNECT
 function connect() {
-  ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+  const status = document.getElementById("status");
+  status.innerText = "Connecting...";
+
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    status.innerText = "LIVE";
+    status.className = "live";
+
+    startPing();
+
+    document.getElementById("page1").classList.remove("active");
+    document.getElementById("page2").classList.add("active");
+  };
+
+  ws.onerror = () => {
+    status.innerText = "Connection Failed";
+    status.className = "fail";
+  };
+
+  ws.onclose = () => {
+    status.innerText = "Reconnecting...";
+    status.className = "fail";
+    stopPing();
+    setTimeout(connect, 3000);
+  };
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+
+    if (data.history) {
+      ticks = data.history.prices.map(p => lastDigit(p));
+      update();
+      subscribe();
+    }
+
+    if (data.tick) {
+      let price = data.tick.quote;
+      document.getElementById("price").innerText = price;
+
+      ticks.push(lastDigit(price));
+      ticks = ticks.slice(-45);
+
+      if (analyzing) update();
+    }
+  };
 }
 
-// ▶️ Start/Stop
+// KEEP ALIVE
+function startPing() {
+  pingInterval = setInterval(() => {
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ ping: 1 }));
+    }
+  }, 25000);
+}
+
+function stopPing() {
+  clearInterval(pingInterval);
+}
+
+// START / STOP
 function toggle() {
-  if (!ws) return alert("Connect first");
+  if (!ws || ws.readyState !== 1) {
+    alert("Connect first");
+    return;
+  }
 
   analyzing = !analyzing;
+  const btn = document.getElementById("toggleBtn");
 
   if (analyzing) {
-    document.getElementById("modal").style.display = "flex";
+    btn.innerText = "STOP ANALYSIS";
 
     ws.send(JSON.stringify({
-      ticks_history: symbol.value,
+      ticks_history: document.getElementById("symbol").value,
       count: 45,
       end: "latest"
     }));
+
   } else {
-    location.reload();
+    btn.innerText = "START ANALYSIS";
   }
 }
 
-// 📡 WebSocket
-wsHandler = (data) => {
-  if (data.history) {
-    ticks = data.history.prices.map(p => lastDigit(p));
-    update();
-    subscribe();
-  }
-
-  if (data.tick) {
-    let price = data.tick.quote;
-    document.getElementById("price").innerText = price;
-
-    ticks.push(lastDigit(price));
-    ticks = ticks.slice(-45);
-
-    update();
-  }
-};
-
+// SUBSCRIBE
 function subscribe() {
   ws.send(JSON.stringify({
-    ticks: symbol.value,
+    ticks: document.getElementById("symbol").value,
     subscribe: 1
   }));
 }
 
+// LAST DIGIT
 function lastDigit(p) {
   return parseInt(p.toString().slice(-1));
 }
 
-// 📊 Logic
+// ANALYSIS
 function update() {
   let freq = Array(10).fill(0);
   ticks.forEach(d => freq[d]++);
@@ -217,23 +259,20 @@ function update() {
   document.getElementById("diff").innerText = diffP.toFixed(1) + "%";
 
   let overdue = freq.filter(f => f === 0).length;
-  let score = Math.min(100, (overdue * 10) + matches * 2);
+  let score = Math.min(100, (overdue * 12) + matches * 2);
 
   document.getElementById("score").innerText = score;
 
-  let pred = "NEUTRAL";
-  if (matches > 5) pred = "MATCH 🔥";
-  else if (overdue > 3) pred = "DIFFERS ⚡";
+  let pred = "WAIT";
+  if (overdue >= 4) pred = "DIFFERS ⚡";
+  else if (matches >= 6) pred = "MATCH 🔥";
 
   document.getElementById("prediction").innerText = pred;
 
   drawChart(freq);
-
-  document.getElementById("loader").style.display = "none";
-  document.getElementById("content").style.display = "block";
 }
 
-// 📊 Chart
+// CHART
 function drawChart(freq) {
   let chart = document.getElementById("chart");
   chart.innerHTML = "";
@@ -241,12 +280,12 @@ function drawChart(freq) {
   freq.forEach(f => {
     let bar = document.createElement("div");
     bar.className = "bar";
-    bar.style.height = (f * 5) + "px";
+    bar.style.height = (f * 6) + "px";
     chart.appendChild(bar);
   });
 }
 
-// 🎨 Matrix
+// MATRIX
 const canvas = document.getElementById("matrix");
 const ctx = canvas.getContext("2d");
 
@@ -258,7 +297,7 @@ let fontSize = 14;
 let columns = canvas.width / fontSize;
 let drops = Array(Math.floor(columns)).fill(1);
 
-function draw() {
+function drawMatrix() {
   ctx.fillStyle = "rgba(0,0,0,0.05)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
@@ -274,12 +313,7 @@ function draw() {
   }
 }
 
-setInterval(draw, 80);
-
-// attach ws listener AFTER connect
-setInterval(() => {
-  if (ws) ws.onmessage = (msg) => wsHandler(JSON.parse(msg.data));
-}, 500);
+setInterval(drawMatrix, 80);
 </script>
 
 </body>
