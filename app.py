@@ -1,246 +1,286 @@
-import { useState, useRef, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DigitFlow Analysis</title>
 
-export default function DerivDashboard() { const [connected, setConnected] = useState(false); const [analyzing, setAnalyzing] = useState(false); const [price, setPrice] = useState("----"); const [ticks, setTicks] = useState([]); const [matchPercent, setMatchPercent] = useState(0); const [diffPercent, setDiffPercent] = useState(0); const [showModal, setShowModal] = useState(false); const [selectedIndex, setSelectedIndex] = useState("1HZ10V"); const [score, setScore] = useState(0); const [prediction, setPrediction] = useState("-");
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: black;
+  color: #00eaff;
+  text-align: center;
+}
 
-const ws = useRef(null); const canvasRef = useRef(null);
+/* Matrix canvas */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
 
-const indices = [ "R_10","R_25","R_50","R_75","R_100", "1HZ10V","1HZ25V","1HZ50V","1HZ75V","1HZ100V" ];
+/* UI */
+.container {
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+}
 
-// 🔥 MATRIX BACKGROUND (LIGHT BLUE LIKE VIDEO) useEffect(() => { const canvas = canvasRef.current; const ctx = canvas.getContext("2d");
+button {
+  padding: 10px 20px;
+  background: orange;
+  border: none;
+  border-radius: 6px;
+  margin: 10px;
+  font-weight: bold;
+}
+
+select {
+  padding: 10px;
+  margin: 10px;
+  background: black;
+  color: orange;
+  border: 1px solid orange;
+}
+
+.price {
+  font-size: 30px;
+  color: orange;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 5;
+}
+
+.circle {
+  width: 100px;
+  height: 100px;
+  border: 4px solid orange;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.freq {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.bar {
+  width: 10px;
+  margin: 2px;
+  background: orange;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="container">
+  <h2>Matches / Differs</h2>
+
+  <select id="symbol">
+    <option value="R_10">Vol 10</option>
+    <option value="R_25">Vol 25</option>
+    <option value="R_50">Vol 50</option>
+    <option value="R_75">Vol 75</option>
+    <option value="R_100">Vol 100</option>
+    <option value="1HZ10V">1s Vol 10</option>
+    <option value="1HZ25V">1s Vol 25</option>
+    <option value="1HZ50V">1s Vol 50</option>
+    <option value="1HZ75V">1s Vol 75</option>
+    <option value="1HZ100V">1s Vol 100</option>
+  </select>
+
+  <br>
+
+  <button onclick="connect()">CONNECT</button>
+  <button onclick="toggle()">START ANALYSIS</button>
+
+  <div class="price" id="price">----</div>
+
+  <div class="freq" id="chart"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div id="loader">Loading...</div>
+
+  <div id="content" style="display:none;">
+    <div class="circle" id="score">0</div>
+
+    <div style="display:flex; gap:30px; margin-top:20px;">
+      <div>
+        <div class="circle" id="match">0%</div>
+        MATCH
+      </div>
+      <div>
+        <div class="circle" id="diff">0%</div>
+        DIFFERS
+      </div>
+    </div>
+
+    <h3 id="prediction"></h3>
+  </div>
+</div>
+
+<script>
+let ws;
+let ticks = [];
+let analyzing = false;
+
+// 🔌 Connect
+function connect() {
+  ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+}
+
+// ▶️ Start/Stop
+function toggle() {
+  if (!ws) return alert("Connect first");
+
+  analyzing = !analyzing;
+
+  if (analyzing) {
+    document.getElementById("modal").style.display = "flex";
+
+    ws.send(JSON.stringify({
+      ticks_history: symbol.value,
+      count: 45,
+      end: "latest"
+    }));
+  } else {
+    location.reload();
+  }
+}
+
+// 📡 WebSocket
+wsHandler = (data) => {
+  if (data.history) {
+    ticks = data.history.prices.map(p => lastDigit(p));
+    update();
+    subscribe();
+  }
+
+  if (data.tick) {
+    let price = data.tick.quote;
+    document.getElementById("price").innerText = price;
+
+    ticks.push(lastDigit(price));
+    ticks = ticks.slice(-45);
+
+    update();
+  }
+};
+
+function subscribe() {
+  ws.send(JSON.stringify({
+    ticks: symbol.value,
+    subscribe: 1
+  }));
+}
+
+function lastDigit(p) {
+  return parseInt(p.toString().slice(-1));
+}
+
+// 📊 Logic
+function update() {
+  let freq = Array(10).fill(0);
+  ticks.forEach(d => freq[d]++);
+
+  let matches = 0;
+  for (let i = 1; i < ticks.length; i++) {
+    if (ticks[i] === ticks[i - 1]) matches++;
+  }
+
+  let matchP = (matches / ticks.length) * 100;
+  let diffP = 100 - matchP;
+
+  document.getElementById("match").innerText = matchP.toFixed(1) + "%";
+  document.getElementById("diff").innerText = diffP.toFixed(1) + "%";
+
+  let overdue = freq.filter(f => f === 0).length;
+  let score = Math.min(100, (overdue * 10) + matches * 2);
+
+  document.getElementById("score").innerText = score;
+
+  let pred = "NEUTRAL";
+  if (matches > 5) pred = "MATCH 🔥";
+  else if (overdue > 3) pred = "DIFFERS ⚡";
+
+  document.getElementById("prediction").innerText = pred;
+
+  drawChart(freq);
+
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("content").style.display = "block";
+}
+
+// 📊 Chart
+function drawChart(freq) {
+  let chart = document.getElementById("chart");
+  chart.innerHTML = "";
+
+  freq.forEach(f => {
+    let bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.height = (f * 5) + "px";
+    chart.appendChild(bar);
+  });
+}
+
+// 🎨 Matrix
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const letters = "0123456789";
-const fontSize = 16;
-const columns = canvas.width / fontSize;
-const drops = Array(Math.floor(columns)).fill(1);
+let letters = "0123456789";
+let fontSize = 14;
+let columns = canvas.width / fontSize;
+let drops = Array(Math.floor(columns)).fill(1);
 
 function draw() {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0,0,0,0.05)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  ctx.fillStyle = "#00eaff"; // light blue glow
-  ctx.shadowColor = "#00eaff";
-  ctx.shadowBlur = 8;
+  ctx.fillStyle = "#00eaff";
   ctx.font = fontSize + "px monospace";
 
   for (let i = 0; i < drops.length; i++) {
-    const text = letters[Math.floor(Math.random() * letters.length)];
-    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    let text = letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(text, i*fontSize, drops[i]*fontSize);
 
-    if (drops[i] * fontSize > canvas.height && Math.random() > 0.96) {
-      drops[i] = 0;
-    }
+    if (drops[i]*fontSize > canvas.height) drops[i] = 0;
     drops[i]++;
   }
 }
 
-const interval = setInterval(draw, 28);
-return () => clearInterval(interval);
+setInterval(draw, 80);
 
-}, []);
+// attach ws listener AFTER connect
+setInterval(() => {
+  if (ws) ws.onmessage = (msg) => wsHandler(JSON.parse(msg.data));
+}, 500);
+</script>
 
-const connect = () => { ws.current = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
-
-ws.current.onopen = () => setConnected(true);
-ws.current.onclose = () => {
-  setConnected(false);
-  setAnalyzing(false);
-};
-
-};
-
-// 🧠 IMPROVED SMART ENGINE const processTicks = (tickArray) => { let matches = 0; let freq = Array(10).fill(0);
-
-tickArray.forEach(d => freq[d]++);
-
-for (let i = 1; i < tickArray.length; i++) {
-  if (tickArray[i] === tickArray[i - 1]) matches++;
-}
-
-const match = (matches / tickArray.length) * 100;
-const diff = 100 - match;
-
-setMatchPercent(match.toFixed(1));
-setDiffPercent(diff.toFixed(1));
-
-const avg = tickArray.length / 10;
-const variance = freq.reduce((acc, f) => acc + Math.pow(f - avg, 2), 0) / 10;
-
-let streak = 1;
-for (let i = tickArray.length - 1; i > 0; i--) {
-  if (tickArray[i] === tickArray[i - 1]) streak++;
-  else break;
-}
-
-const overdueDigits = freq.filter(f => f === 0).length;
-
-const finalScore = (variance * 3) + (streak * 8) + (overdueDigits * 5);
-setScore(Math.min(100, finalScore.toFixed(0)));
-
-// 🎯 BETTER SIGNAL
-if (streak >= 5) {
-  setPrediction("STRONG MATCH 🔥");
-} else if (streak >= 3) {
-  setPrediction("MATCH CONTINUATION");
-} else if (overdueDigits >= 4) {
-  setPrediction("DIFFERS SPIKE ⚡");
-} else if (match > 65) {
-  setPrediction("MATCH BIAS");
-} else if (diff > 65) {
-  setPrediction("DIFFERS BIAS");
-} else {
-  setPrediction("WAIT / NEUTRAL");
-}
-
-};
-
-const startAnalysis = () => { if (!ws.current || ws.current.readyState !== 1) return;
-
-setAnalyzing(true);
-setShowModal(true);
-
-// ⚡ INSTANT 45 TICKS BUFFER
-ws.current.send(JSON.stringify({
-  ticks_history: selectedIndex,
-  count: 45,
-  end: "latest",
-  style: "ticks"
-}));
-
-ws.current.onmessage = (msg) => {
-  const data = JSON.parse(msg.data);
-
-  if (data.history) {
-    const digits = data.history.prices.map(p => parseInt(p.toString().slice(-1)));
-    setTicks(digits);
-    processTicks(digits);
-
-    ws.current.send(JSON.stringify({
-      ticks: selectedIndex,
-      subscribe: 1
-    }));
-  }
-
-  if (data.tick) {
-    const p = data.tick.quote;
-    setPrice(p);
-
-    const digit = parseInt(p.toString().slice(-1));
-
-    setTicks(prev => {
-      const updated = [...prev, digit].slice(-45);
-      processTicks(updated);
-      return updated;
-    });
-  }
-};
-
-};
-
-const stopAnalysis = () => { setAnalyzing(false); setShowModal(false); ws.current.close(); setTicks([]); };
-
-const freq = Array(10).fill(0); ticks.forEach(d => freq[d]++);
-
-return ( <div className="relative min-h-screen text-green-400 flex flex-col items-center p-4">
-
-<canvas ref={canvasRef} className="fixed inset-0 z-0" />
-
-  <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
-
-    <h1 className="text-lg mb-2 text-orange-400 font-bold">Matches / Differs</h1>
-
-    <select
-      className="mb-4 bg-black border border-orange-400 p-2 rounded text-orange-400 w-full"
-      value={selectedIndex}
-      onChange={(e) => setSelectedIndex(e.target.value)}
-    >
-      {indices.map(i => <option key={i}>{i}</option>)}
-    </select>
-
-    {!connected ? (
-      <button onClick={connect} className="bg-orange-500 text-black px-6 py-2 rounded mb-4 w-full">
-        CONNECT TO WEBSOCKET
-      </button>
-    ) : (
-      <p className="mb-4 text-green-400">● LIVE</p>
-    )}
-
-    <div className="bg-black border border-orange-400 px-6 py-2 rounded mb-4 text-orange-400 w-full text-center">
-      Volatility Index: {selectedIndex}
-    </div>
-
-    <div className="text-3xl text-orange-400 mb-4 font-bold">{price}</div>
-
-    {connected && (
-      <button
-        onClick={analyzing ? stopAnalysis : startAnalysis}
-        className="bg-orange-500 text-black px-6 py-3 rounded mb-6 w-full font-bold"
-      >
-        {analyzing ? "STOP ANALYSIS" : "START ANALYSIS"}
-      </button>
-    )}
-
-    {/* 📊 DIGIT FREQUENCY CHART */}
-    <div className="w-full mt-4 bg-black bg-opacity-60 p-3 rounded border border-orange-400">
-      <p className="text-xs text-center mb-2">DIGIT FREQUENCY (45 TICKS)</p>
-      <div className="flex justify-between items-end h-24">
-        {freq.map((f, i) => (
-          <div key={i} className="flex flex-col items-center w-full">
-            <div
-              className="w-3 bg-orange-400 rounded"
-              style={{ height: `${f * 5}px` }}
-            ></div>
-            <span className="text-xs">{i}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-
-  </div>
-
-  {showModal && (
-    <div className="fixed inset-0 bg-black bg-opacity-95 flex flex-col items-center justify-center z-20">
-
-      {ticks.length === 0 && (
-        <div className="w-24 h-24 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mb-6"></div>
-      )}
-
-      {ticks.length > 0 && (
-        <>
-          {/* 🟠 SCORE CIRCLE */}
-          <div className="w-32 h-32 rounded-full border-4 border-orange-400 flex items-center justify-center text-3xl mb-6 shadow-lg">
-            {score}
-          </div>
-
-          {/* MATCH / DIFFER UI */}
-          <div className="flex gap-12">
-            <div className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full border-4 border-orange-400 flex items-center justify-center text-xl">
-                {matchPercent}%
-              </div>
-              <p className="mt-2">MATCH</p>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full border-4 border-red-500 flex items-center justify-center text-xl">
-                {diffPercent}%
-              </div>
-              <p className="mt-2">DIFFERS</p>
-            </div>
-          </div>
-
-          {/* 🎯 PREDICTION OUTPUT */}
-          <div className="mt-6 text-orange-400 text-xl font-bold text-center">
-            {prediction}
-          </div>
-        </>
-      )}
-
-    </div>
-  )}
-
-</div>
-
-); }
+</body>
+</html>
