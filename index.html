@@ -1,249 +1,357 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DigitFlowPro</title>
 
 <style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
 body{
-    margin:0;
-    background:#000;
-    color:#ff8c00;
-    font-family:Arial;
-    overflow:hidden;
+  background:#000;
+  color:#ff8c00;
+  font-family:Arial;
+  height:100vh;
+  overflow:hidden;
 }
 
-/* MATRIX BACKGROUND */
-canvas{
-    position:fixed;
-    top:0;
-    left:0;
-    z-index:0;
-}
-
-/* UI LAYER */
-.app{
-    position:relative;
-    z-index:2;
-    padding:10px;
+/* MAIN LAYOUT */
+#app{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:8px;
 }
 
 /* HEADER */
 .header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+}
+
+.header button{
+  background:none;
+  border:none;
+  color:#ff8c00;
 }
 
 .live{
-    color:#00ff00;
-    font-weight:bold;
+  color:#00ff00;
+  font-weight:bold;
 }
 
-/* TITLE */
-.title{
-    text-align:center;
-    font-size:22px;
-    margin:10px 0;
+/* TITLE AREA */
+.top{
+  text-align:center;
 }
 
-/* DROPDOWN */
+.top h3{
+  font-size:14px;
+  margin:2px 0;
+}
+
 select{
-    width:100%;
-    padding:10px;
-    background:#111;
-    border:1px solid #ff8c00;
-    color:#ff8c00;
+  width:100%;
+  background:#111;
+  border:1px solid #ff8c00;
+  color:#ff8c00;
+  padding:5px;
+  margin:4px 0;
 }
 
 /* PRICE */
 .price{
-    text-align:center;
-    font-size:28px;
-    margin:10px 0;
+  font-size:28px;
+  text-shadow:0 0 8px #ff8c00;
+  margin:2px 0;
 }
 
 /* BUTTON */
-.btn{
-    display:block;
-    margin:10px auto;
-    padding:10px 20px;
-    border:1px solid red;
-    background:transparent;
-    color:red;
+#toggle{
+  font-size:12px;
+  padding:6px 12px;
+  margin:4px auto;
+  display:block;
+  background:transparent;
+  border:1px solid red;
+  color:red;
+}
+
+/* CENTER STAGE */
+.stage{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
 }
 
 /* MAIN CIRCLE */
-.circle{
-    width:120px;
-    height:120px;
-    border:4px solid #ff8c00;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:40px;
-    margin:10px auto;
+.main-circle{
+  width:110px;
+  height:110px;
+  border:3px solid #ff8c00;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:44px;
+  box-shadow:0 0 12px #ff8c00;
 }
 
-/* MATCH / DIFFER */
-.row{
-    display:flex;
-    justify-content:space-around;
+/* SUB CIRCLES */
+.sub{
+  display:flex;
+  justify-content:space-between;
+  width:80%;
+  margin-top:6px;
 }
 
-.small{
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    border:2px solid #ff8c00;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
+.small-circle{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
+
+.match{
+  border:2px solid #ff8c00;
+}
+
+.diff{
+  border:2px solid red;
+}
+
+/* PERCENT */
+.percent{
+  text-align:center;
+  font-size:11px;
 }
 
 /* CHART */
 .chart{
-    display:flex;
-    align-items:flex-end;
-    height:150px;
-    margin-top:20px;
+  height:120px;
+  border:1px solid #ff8c00;
+  padding:6px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.chart-title{
+  font-size:10px;
+}
+
+.bars{
+  display:flex;
+  align-items:flex-end;
+  height:90px;
 }
 
 .bar{
-    flex:1;
-    margin:2px;
-    background:#ff8c00;
+  width:8%;
+  margin:0 1%;
+  background:#ff8c00;
+  transition:height .2s ease;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="matrix"></canvas>
+<div id="app">
 
-<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <button onclick="location.reload()">← Back</button>
+    <div>DigitFlowPro</div>
+    <div class="live">● LIVE</div>
+  </div>
 
-<div class="header">
-<button onclick="back()">← Back</button>
-<div>DigitFlowPro</div>
-<div class="live" id="live">● LIVE</div>
-</div>
+  <!-- TOP -->
+  <div class="top">
+    <h3>Matches / Differs</h3>
+    <select id="symbol"></select>
+    <div id="price" class="price">0.00</div>
+  </div>
 
-<div class="title">Matches / Differs</div>
+  <!-- STAGE -->
+  <div class="stage">
 
-<select id="vol">
-<option>Volatility 10 (1s)</option>
-<option>Volatility 25 (1s)</option>
-<option>Volatility 50 (1s)</option>
-</select>
+    <button id="toggle">START ANALYSIS</button>
 
-<div class="price" id="price">--</div>
+    <div class="main-circle" id="digit">0</div>
 
-<button class="btn" id="toggle">Stop Analysis</button>
+    <div class="sub">
+      <div>
+        <div class="small-circle match" id="matchVal">0</div>
+        <div class="percent" id="matchPct">0%</div>
+      </div>
 
-<div class="circle" id="digit">0</div>
+      <div>
+        <div class="small-circle diff" id="diffVal">0</div>
+        <div class="percent" id="diffPct">0%</div>
+      </div>
+    </div>
 
-<div class="row">
-<div>
-<div class="small" id="match">0</div>
-<p>Match</p>
-</div>
+  </div>
 
-<div>
-<div class="small" style="border-color:red;color:red" id="diff">0</div>
-<p>Differs</p>
-</div>
-</div>
-
-<div class="chart" id="chart"></div>
+  <!-- CHART -->
+  <div class="chart">
+    <div class="chart-title">DIGIT FREQUENCY (100 TICKS)</div>
+    <div class="bars" id="bars"></div>
+  </div>
 
 </div>
 
 <script>
-// MATRIX EFFECT
-let c=document.getElementById("matrix");
-let ctx=c.getContext("2d");
-c.height=window.innerHeight;
-c.width=window.innerWidth;
 
-let letters="01";
-let drops=Array(Math.floor(c.width/10)).fill(1);
+// =====================
+// WEBSOCKET
+// =====================
+let ws;
+let latestPrice=null;
+let symbol="R_10";
 
-function draw(){
-ctx.fillStyle="rgba(0,0,0,0.05)";
-ctx.fillRect(0,0,c.width,c.height);
-ctx.fillStyle="#0f0";
+ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
 
-for(let i=0;i<drops.length;i++){
-let text=letters[Math.floor(Math.random()*letters.length)];
-ctx.fillText(text,i*10,drops[i]*10);
-
-if(drops[i]*10>c.height && Math.random()>0.95) drops[i]=0;
-drops[i]++;
-}
-}
-setInterval(draw,50);
-
-// SIMULATION LOGIC
-let price=9780;
-let lastDigit=null;
-let match=0;
-let diff=0;
-let counts=Array(10).fill(0);
-let running=true;
-
-document.getElementById("toggle").onclick=()=>{
-running=!running;
-document.getElementById("toggle").innerText=running?"Stop Analysis":"Start Analysis";
+ws.onopen = ()=>{
+  subscribe(symbol);
 };
 
-function tick(){
-if(running){
-price+=Math.random()*2-1;
-let p=price.toFixed(2);
-document.getElementById("price").innerText=p;
-
-let d=parseInt(p.slice(-1));
-document.getElementById("digit").innerText=d;
-
-counts[d]++;
-
-if(lastDigit!==null){
-if(d===lastDigit) match++;
-else diff++;
+function subscribe(sym){
+  ws.send(JSON.stringify({ticks:sym,subscribe:1}));
 }
 
-lastDigit=d;
+ws.onmessage = (msg)=>{
+  let data = JSON.parse(msg.data);
+  if(data.tick){
+    let p = data.tick.quote.toFixed(2);
+    latestPrice = p;
+    document.getElementById("price").innerText = p;
+  }
+};
 
-document.getElementById("match").innerText=match;
-document.getElementById("diff").innerText=diff;
+// =====================
+// SYMBOLS
+// =====================
+let list=["R_10","R_10_1S","R_25","R_25_1S","R_50","R_50_1S","R_75","R_75_1S","R_100","R_100_1S"];
 
-drawChart();
-}
-}
-
-setInterval(tick,1000);
-
-function drawChart(){
-let chart=document.getElementById("chart");
-chart.innerHTML="";
-
-let max=Math.max(...counts);
-
-counts.forEach(c=>{
-let bar=document.createElement("div");
-bar.className="bar";
-bar.style.height=(c/max*100)+"%";
-chart.appendChild(bar);
+list.forEach(s=>{
+  let o=document.createElement("option");
+  o.value=s;
+  o.text=s;
+  symbolEl.appendChild(o);
 });
+
+// =====================
+// ANALYSIS
+// =====================
+let buffer=[];
+
+toggle.onclick = async ()=>{
+  buffer=[];
+  digit.innerText="...";
+
+  await collect(100);
+
+  let r = analyze(buffer);
+
+  show(r);
+  chart(buffer);
+};
+
+// =====================
+// FAST BUFFER
+// =====================
+function collect(n){
+  return new Promise(res=>{
+    let c=0;
+    let i=setInterval(()=>{
+      if(!latestPrice)return;
+
+      buffer.push(parseInt(latestPrice.slice(-1)));
+      c++;
+
+      if(c>=n){
+        clearInterval(i);
+        res();
+      }
+    },8);
+  });
 }
 
-function back(){
-alert("Go back to connection page");
+// =====================
+// STRATEGY
+// =====================
+function analyze(d){
+
+  let f=Array(10).fill(0);
+  let m=0,df=0;
+
+  for(let i=0;i<d.length;i++){
+    f[d[i]]++;
+    if(i>0){
+      d[i]==d[i-1]?m++:df++;
+    }
+  }
+
+  let max=f.indexOf(Math.max(...f));
+  let min=f.indexOf(Math.min(...f));
+
+  let s=m/(m+df||1);
+
+  if(s>0.6){
+    return {signal:"MATCH",digit:max,confidence:85};
+  }else{
+    return {signal:"DIFFERS",digit:min,confidence:75};
+  }
 }
+
+// =====================
+// DISPLAY
+// =====================
+function show(r){
+
+  digit.innerText=r.digit;
+
+  if(r.signal==="MATCH"){
+    matchVal.innerText=r.digit;
+    matchPct.innerText=r.confidence+"%";
+    diffVal.innerText="-";
+    diffPct.innerText="0%";
+  }else{
+    diffVal.innerText=r.digit;
+    diffPct.innerText=r.confidence+"%";
+    matchVal.innerText="-";
+    matchPct.innerText="0%";
+  }
+}
+
+// =====================
+// CHART
+// =====================
+function chart(d){
+
+  bars.innerHTML="";
+  let f=Array(10).fill(0);
+  d.forEach(x=>f[x]++);
+
+  let max=Math.max(...f);
+
+  f.forEach(v=>{
+    let b=document.createElement("div");
+    b.className="bar";
+    b.style.height=(v/max)*100+"%";
+    bars.appendChild(b);
+  });
+}
+
 </script>
 
 </body>
