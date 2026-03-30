@@ -10,10 +10,9 @@ body {
   font-family: Arial;
   background: black;
   color: orange;
-  text-align: center;
 }
 
-/* MATRIX BACKGROUND */
+/* MATRIX */
 canvas {
   position: fixed;
   top: 0;
@@ -21,102 +20,112 @@ canvas {
   z-index: -1;
 }
 
+/* PAGE CONTROL */
+.page {
+  display: none;
+}
+.active {
+  display: block;
+}
+
 /* HEADER */
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 15px;
-  font-size: 20px;
-  font-weight: bold;
 }
 
 .live {
   color: lime;
-  font-size: 14px;
+  font-weight: bold;
 }
 
-/* MAIN CARD */
-.container {
-  width: 90%;
-  max-width: 350px;
-  margin: auto;
-}
-
-/* PRICE BOX */
-.price-box {
-  border: 1px solid orange;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 10px;
-}
-
-.price {
-  font-size: 22px;
-  margin-top: 5px;
+/* CENTER */
+.center {
+  text-align: center;
+  margin-top: 40px;
 }
 
 /* BUTTON */
 button {
-  margin-top: 15px;
   padding: 12px;
-  width: 80%;
   border-radius: 8px;
   border: none;
-  font-size: 16px;
   background: orange;
   color: black;
+  margin-top: 15px;
 }
 
-/* SCORE CIRCLE */
-.score-circle {
-  margin: 25px auto;
+/* DROPDOWN */
+select {
+  width: 90%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* PRICE */
+.price {
+  font-size: 24px;
+  margin: 10px;
+}
+
+/* LOADING CIRCLE */
+.loader {
+  width: 120px;
+  height: 120px;
+  border: 5px solid rgba(255,140,0,0.2);
+  border-top: 5px solid orange;
+  border-radius: 50%;
+  margin: 20px auto;
+  animation: spin 0.5s linear;
+  display: none;
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* SCORE */
+.score {
   width: 120px;
   height: 120px;
   border: 4px solid orange;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-}
-
-/* MATCH / DIFFERS */
-.row {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-.circle-box {
-  width: 45%;
-}
-
-.small-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid orange;
   margin: auto;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.red {
-  border-color: red;
+/* MATCH DIFF */
+.row {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
 }
 
-.percent {
-  margin-top: 5px;
+.circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid orange;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.red {
+  border-color: red;
 }
 
 /* CHART */
 .chart {
   margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
 }
-
 .bar {
-  display: inline-block;
   width: 6%;
-  margin: 1%;
   background: orange;
 }
 </style>
@@ -126,106 +135,169 @@ button {
 
 <canvas id="matrix"></canvas>
 
-<div class="header">
-  Digit Tracker Analysis Tool
-  <div class="live" id="status">Connecting...</div>
+<!-- PAGE 1 -->
+<div id="page1" class="page active">
+  <div class="center">
+    <h2>Digit Tracker Analysis Tool</h2>
+    <button onclick="connectWS()">Connect WebSocket</button>
+    <div id="status"></div>
+  </div>
 </div>
 
-<div class="container">
+<!-- PAGE 2 -->
+<div id="page2" class="page">
 
-  <h3>Matches / Differs</h3>
+  <div class="header">
+    <button onclick="goBack()">⬅ BACK</button>
+    <div>Digit Tracker</div>
+    <div id="live" class="live">LIVE</div>
+  </div>
 
-  <div class="price-box">
-    <div>Volatility 10 (1s) Index</div>
+  <div class="center">
+    <h3>Matches / Differs</h3>
+
+    <select id="market" onchange="changeMarket()">
+      <option value="R_10">Volatility 10 (1s)</option>
+      <option value="R_25">Volatility 25</option>
+      <option value="R_50">Volatility 50</option>
+      <option value="R_75">Volatility 75</option>
+      <option value="R_100">Volatility 100</option>
+    </select>
+
     <div class="price" id="price">--</div>
-  </div>
 
-  <button onclick="toggleAnalysis()" id="btn">START ANALYSIS</button>
+    <button onclick="toggleAnalysis()" id="btn">START ANALYSIS</button>
 
-  <div class="score-circle" id="score">0</div>
+    <div class="loader" id="loader"></div>
 
-  <div class="row">
-    <div class="circle-box">
-      <div>MATCH</div>
-      <div class="small-circle" id="match">0</div>
-      <div class="percent" id="matchP">0%</div>
+    <div class="score" id="score">0</div>
+
+    <div class="row">
+      <div>
+        MATCH
+        <div class="circle" id="match">0</div>
+        <div id="matchP">0%</div>
+      </div>
+
+      <div>
+        DIFFERS
+        <div class="circle red" id="diff">0</div>
+        <div id="diffP">0%</div>
+      </div>
     </div>
 
-    <div class="circle-box">
-      <div>DIFFERS</div>
-      <div class="small-circle red" id="diff">0</div>
-      <div class="percent" id="diffP">0%</div>
-    </div>
-  </div>
+    <div class="chart" id="chart"></div>
 
-  <div class="chart" id="chart"></div>
+  </div>
 
 </div>
 
 <script>
 let ws;
-let analyzing = false;
 let digits = [];
+let analyzing = false;
+let currentSymbol = "R_10";
 
-function connect() {
+/* CONNECT */
+function connectWS() {
   ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
 
   ws.onopen = () => {
     document.getElementById("status").innerText = "LIVE";
-    ws.send(JSON.stringify({ticks: "R_10", subscribe: 1}));
-  };
-
-  ws.onmessage = (msg) => {
-    let data = JSON.parse(msg.data);
-    if (data.tick) {
-      let price = data.tick.quote;
-      document.getElementById("price").innerText = price;
-
-      let lastDigit = parseInt(price.toString().slice(-1));
-      digits.push(lastDigit);
-      if (digits.length > 45) digits.shift();
-
-      if (analyzing) updateUI();
-    }
+    showPage(2);
+    subscribe();
   };
 
   ws.onclose = () => {
     document.getElementById("status").innerText = "Connection Failed";
-    setTimeout(connect, 3000);
+  };
+
+  ws.onmessage = (msg) => {
+    let data = JSON.parse(msg.data);
+
+    if (data.tick) {
+      let price = data.tick.quote;
+      document.getElementById("price").innerText = price;
+
+      let digit = parseInt(price.toString().slice(-1));
+      digits.push(digit);
+      if (digits.length > 100) digits.shift();
+
+      if (analyzing) updateUI();
+    }
   };
 }
 
-connect();
-
-function toggleAnalysis() {
-  analyzing = !analyzing;
-  document.getElementById("btn").innerText =
-    analyzing ? "STOP ANALYSIS" : "START ANALYSIS";
+/* PAGE SWITCH */
+function showPage(p) {
+  document.getElementById("page1").classList.remove("active");
+  document.getElementById("page2").classList.remove("active");
+  document.getElementById("page" + p).classList.add("active");
 }
 
+/* BACK */
+function goBack() {
+  showPage(1);
+}
+
+/* MARKET CHANGE */
+function changeMarket() {
+  currentSymbol = document.getElementById("market").value;
+  digits = [];
+  ws.close();
+  connectWS();
+}
+
+/* SUBSCRIBE */
+function subscribe() {
+  ws.send(JSON.stringify({
+    ticks: currentSymbol,
+    subscribe: 1
+  }));
+}
+
+/* TOGGLE */
+function toggleAnalysis() {
+  analyzing = !analyzing;
+
+  document.getElementById("btn").innerText =
+    analyzing ? "STOP ANALYSIS" : "START ANALYSIS";
+
+  let loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+  setTimeout(() => {
+    loader.style.display = "none";
+    updateUI();
+  }, 500);
+}
+
+/* UPDATE */
 function updateUI() {
   let freq = Array(10).fill(0);
 
   digits.forEach(d => freq[d]++);
 
-  let match = freq[digits[digits.length-1]];
+  let last = digits[digits.length-1];
+  let match = freq[last];
   let diff = digits.length - match;
 
   document.getElementById("match").innerText = match;
   document.getElementById("diff").innerText = diff;
 
   document.getElementById("matchP").innerText =
-    Math.round((match / digits.length) * 100) + "%";
+    Math.round((match/digits.length)*100) + "%";
 
   document.getElementById("diffP").innerText =
-    Math.round((diff / digits.length) * 100) + "%";
+    Math.round((diff/digits.length)*100) + "%";
 
   document.getElementById("score").innerText =
-    Math.round((match / digits.length) * 10);
+    Math.round((match/digits.length)*10);
 
   drawChart(freq);
 }
 
+/* CHART */
 function drawChart(freq) {
   let chart = document.getElementById("chart");
   chart.innerHTML = "";
@@ -233,12 +305,12 @@ function drawChart(freq) {
   freq.forEach(v => {
     let bar = document.createElement("div");
     bar.className = "bar";
-    bar.style.height = (v * 5) + "px";
+    bar.style.height = (v * 4) + "px";
     chart.appendChild(bar);
   });
 }
 
-/* MATRIX EFFECT */
+/* MATRIX */
 let c = document.getElementById("matrix");
 let ctx = c.getContext("2d");
 
@@ -250,8 +322,8 @@ letters = letters.split("");
 
 let fontSize = 10;
 let columns = c.width / fontSize;
-
 let drops = [];
+
 for (let i = 0; i < columns; i++) drops[i] = 1;
 
 function draw() {
