@@ -1,115 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Digit Tracker Analysis Tool</title>
 
 <style>
-body {
+body{
     margin:0;
-    font-family: Arial;
-    background:black;
+    background:#000;
     color:#FF8C00;
+    font-family:Arial;
+    height:100vh;
     overflow:hidden;
 }
 
-/* MATRIX BACKGROUND */
-canvas {
+/* MATRIX */
+canvas{
     position:fixed;
     top:0;
     left:0;
     z-index:-1;
+    opacity:0.2;
 }
 
 /* HEADER */
-.header {
+.header{
     display:flex;
     justify-content:space-between;
+    align-items:center;
     padding:10px;
     font-size:14px;
 }
-.live {
+
+.live{
     color:#00ff66;
     font-weight:bold;
 }
 
-/* MAIN CONTAINER */
-.container {
+/* MAIN LAYOUT */
+.main{
+    height:calc(100vh - 40px);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
     padding:10px;
+}
+
+/* TOP SECTION */
+.top{
     text-align:center;
 }
 
-/* CARD */
-.card {
+/* DROPDOWN */
+select{
     border:1px solid #FF8C00;
-    border-radius:12px;
-    padding:10px;
-    margin:10px 0;
-    backdrop-filter: blur(4px);
+    background:black;
+    color:#FF8C00;
+    padding:5px;
+}
+
+/* PRICE */
+.price{
+    font-size:26px;
+    margin-top:5px;
+    text-shadow:0 0 8px #FF8C00;
 }
 
 /* BUTTON */
-button {
+button{
+    margin-top:8px;
+    padding:6px 15px;
+    border-radius:20px;
     background:transparent;
     border:1px solid red;
     color:red;
-    padding:10px 20px;
-    border-radius:20px;
-    font-size:14px;
 }
 
-/* CIRCLE */
-.circle {
+/* CENTER STAGE */
+.stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+/* MAIN CIRCLE */
+.big-circle{
     width:120px;
     height:120px;
-    border:4px solid #FF8C00;
     border-radius:50%;
+    border:4px solid #FF8C00;
     display:flex;
     justify-content:center;
     align-items:center;
-    font-size:40px;
-    margin:auto;
+    font-size:48px;
+    margin:10px 0;
     box-shadow:0 0 15px #FF8C00;
 }
 
 /* SMALL CIRCLES */
-.small-circle {
-    width:80px;
-    height:80px;
+.small-wrap{
+    display:flex;
+    justify-content:space-between;
+    width:80%;
+}
+
+.small{
+    text-align:center;
+}
+
+.small-circle{
+    width:70px;
+    height:70px;
     border-radius:50%;
     border:3px solid #FF8C00;
     display:flex;
     justify-content:center;
     align-items:center;
-    font-size:20px;
-}
-
-.row {
-    display:flex;
-    justify-content:space-around;
-    margin-top:10px;
 }
 
 /* CHART */
-.bar-container {
-    display:flex;
-    justify-content:space-between;
-    height:120px;
-    align-items:flex-end;
-}
-.bar {
-    width:8%;
-    background:#FF8C00;
+.chart{
+    border:1px solid #FF8C00;
+    padding:10px;
+    border-radius:10px;
 }
 
-/* DROPDOWN */
-select {
-    background:black;
-    color:#FF8C00;
-    border:1px solid #FF8C00;
-    padding:5px;
-    border-radius:6px;
+.bars{
+    display:flex;
+    align-items:flex-end;
+    height:100px;
+}
+
+.bar{
+    flex:1;
+    margin:2px;
+    background:#FF8C00;
+    transition:height 0.2s ease-out;
+}
+
+.labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
 }
 </style>
 </head>
@@ -119,167 +152,143 @@ select {
 <canvas id="matrix"></canvas>
 
 <div class="header">
-    <span onclick="goBack()">← Back</span>
+    <span onclick="location.reload()">← Back</span>
     <span>DigitFlowPro</span>
-    <span id="liveStatus">Connecting...</span>
+    <span id="live">Connecting...</span>
 </div>
 
-<div class="container">
+<div class="main">
 
-<h2>Matches / Differs</h2>
+<div class="top">
+    <h3>Matches / Differs</h3>
 
-<div class="card">
     <select id="symbol">
-        <option value="R_10">Volatility 10</option>
         <option value="1HZ10V">Volatility 10 (1s)</option>
+        <option value="R_10">Volatility 10</option>
         <option value="R_25">Volatility 25</option>
         <option value="R_50">Volatility 50</option>
         <option value="R_75">Volatility 75</option>
         <option value="R_100">Volatility 100</option>
     </select>
 
-    <h1 id="price">0.00</h1>
+    <div class="price" id="price">0.00</div>
+
+    <button onclick="toggle()">Start Analysis</button>
 </div>
 
-<button onclick="toggleAnalysis()" id="toggleBtn">Start Analysis</button>
+<div class="stage">
 
-<div class="circle" id="digitCircle">0</div>
+    <div class="big-circle" id="digit">0</div>
 
-<div class="card">
-    <div class="row">
-        <div>
-            <div>MATCH</div>
+    <div class="small-wrap">
+        <div class="small">
+            MATCH
             <div class="small-circle" id="match">0</div>
-            <div id="matchPct">0%</div>
+            <div id="matchP">0%</div>
         </div>
-        <div>
-            <div>DIFFERS</div>
+
+        <div class="small">
+            DIFFERS
             <div class="small-circle" style="border-color:red;color:red" id="diff">0</div>
-            <div id="diffPct">0%</div>
+            <div id="diffP">0%</div>
         </div>
     </div>
+
 </div>
 
-<div class="card">
-    <div>DIGIT FREQUENCY (100 TICKS)</div>
-    <div class="bar-container" id="bars"></div>
+<div class="chart">
+    <div style="font-size:10px;">DIGIT FREQUENCY (100 TICKS)</div>
+    <div class="bars" id="bars"></div>
+    <div class="labels">0 1 2 3 4 5 6 7 8 9</div>
 </div>
 
 </div>
 
 <script>
-// MATRIX EFFECT
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
-canvas.height = window.innerHeight;
-canvas.width = window.innerWidth;
-
-let letters = "0123456789";
-letters = letters.split("");
-
-let fontSize = 10;
-let columns = canvas.width/fontSize;
-
-let drops = [];
-for(let x=0;x<columns;x++) drops[x]=1;
+// MATRIX
+let c=document.getElementById("matrix");
+let ctx=c.getContext("2d");
+c.width=window.innerWidth;
+c.height=window.innerHeight;
+let letters="0123456789";
+let drops=[];
+for(let i=0;i<200;i++) drops[i]=1;
 
 function draw(){
-    ctx.fillStyle="rgba(0,0,0,0.05)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="#0F0";
-    ctx.font=fontSize+"px monospace";
-
-    for(let i=0;i<drops.length;i++){
-        let text=letters[Math.floor(Math.random()*letters.length)];
-        ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-
-        if(drops[i]*fontSize>canvas.height && Math.random()>0.975)
-            drops[i]=0;
-
-        drops[i]++;
-    }
-}
-setInterval(draw,33);
+ctx.fillStyle="rgba(0,0,0,0.1)";
+ctx.fillRect(0,0,c.width,c.height);
+ctx.fillStyle="#0F0";
+for(let i=0;i<drops.length;i++){
+let text=letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text,i*10,drops[i]*10);
+if(drops[i]*10>c.height) drops[i]=0;
+drops[i]++;
+}}
+setInterval(draw,50);
 
 // WEBSOCKET
-let ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
+let ws=new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
 
 let ticks=[];
-let analyzing=false;
+let running=false;
 
 ws.onopen=()=>{
-    document.getElementById("liveStatus").innerHTML="● LIVE";
-    document.getElementById("liveStatus").classList.add("live");
-    subscribe();
-};
-
-ws.onerror=()=>{
-    document.getElementById("liveStatus").innerText="Connection Fail";
+document.getElementById("live").innerHTML="● LIVE";
+document.getElementById("live").className="live";
+subscribe();
 };
 
 function subscribe(){
-    ws.send(JSON.stringify({
-        ticks: document.getElementById("symbol").value
-    }));
+ws.send(JSON.stringify({ticks:document.getElementById("symbol").value}));
 }
 
-ws.onmessage=(msg)=>{
-    let data=JSON.parse(msg.data);
-    if(data.tick){
-        let price=data.tick.quote;
-        document.getElementById("price").innerText=price;
+ws.onmessage=(m)=>{
+let d=JSON.parse(m.data);
+if(d.tick){
+let p=d.tick.quote;
+document.getElementById("price").innerText=p;
 
-        let digit = price.toString().slice(-1);
-        document.getElementById("digitCircle").innerText=digit;
+let digit=p.toString().slice(-1);
+document.getElementById("digit").innerText=digit;
 
-        ticks.push(Number(digit));
-        if(ticks.length>100) ticks.shift();
+ticks.push(Number(digit));
+if(ticks.length>100) ticks.shift();
 
-        updateChart();
+updateChart();
 
-        if(analyzing) calculate();
-    }
+if(running) calc();
+}
 };
 
 // ANALYSIS
-function toggleAnalysis(){
-    analyzing=!analyzing;
-    document.getElementById("toggleBtn").innerText=
-        analyzing?"Stop Analysis":"Start Analysis";
+function toggle(){
+running=!running;
+document.querySelector("button").innerText=running?"Stop Analysis":"Start Analysis";
 }
 
-function calculate(){
-    let last=ticks[ticks.length-1];
-    let match=ticks.filter(d=>d===last).length;
-    let diff=ticks.length-match;
+function calc(){
+let last=ticks[ticks.length-1];
+let match=ticks.filter(x=>x==last).length;
+let diff=ticks.length-match;
 
-    document.getElementById("match").innerText=match;
-    document.getElementById("diff").innerText=diff;
+document.getElementById("match").innerText=match;
+document.getElementById("diff").innerText=diff;
 
-    document.getElementById("matchPct").innerText=
-        Math.round(match/ticks.length*100)+"%";
-
-    document.getElementById("diffPct").innerText=
-        Math.round(diff/ticks.length*100)+"%";
+document.getElementById("matchP").innerText=Math.round(match/ticks.length*100)+"%";
+document.getElementById("diffP").innerText=Math.round(diff/ticks.length*100)+"%";
 }
 
 // CHART
 function updateChart(){
-    let freq=Array(10).fill(0);
-    ticks.forEach(d=>freq[d]++);
+let freq=Array(10).fill(0);
+ticks.forEach(d=>freq[d]++);
 
-    let barsHTML="";
-    freq.forEach(f=>{
-        let h=(f/ticks.length)*100 || 0;
-        barsHTML+=`<div class="bar" style="height:${h}%"></div>`;
-    });
-
-    document.getElementById("bars").innerHTML=barsHTML;
-}
-
-// BACK BUTTON
-function goBack(){
-    location.reload();
+let html="";
+freq.forEach(f=>{
+let h=(f/ticks.length)*100||1;
+html+=`<div class="bar" style="height:${h}%"></div>`;
+});
+document.getElementById("bars").innerHTML=html;
 }
 </script>
 
