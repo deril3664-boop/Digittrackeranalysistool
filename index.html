@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Digit Tracker Analysis Tool</title>
 
 <style>
@@ -10,72 +9,114 @@ body {
   margin: 0;
   font-family: Arial;
   background: black;
-  color: #00eaff;
+  color: orange;
   text-align: center;
 }
 
+/* MATRIX BACKGROUND */
 canvas {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 0;
+  z-index: -1;
 }
 
-.page {
-  display: none;
-  position: relative;
-  z-index: 2;
-  padding: 20px;
-}
-
-.active {
-  display: block;
-}
-
-button {
-  padding: 12px 20px;
-  background: orange;
-  border: none;
-  border-radius: 6px;
-  margin: 10px;
+/* HEADER */
+.header {
+  padding: 15px;
+  font-size: 20px;
   font-weight: bold;
 }
 
-.live { color: lime; }
-.fail { color: red; }
-
-.price {
-  font-size: 28px;
-  color: orange;
+.live {
+  color: lime;
+  font-size: 14px;
 }
 
-select {
-  padding: 10px;
-  background: black;
-  color: orange;
-  border: 1px solid orange;
-}
-
-.circle {
-  width: 100px;
-  height: 100px;
-  border: 4px solid orange;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* MAIN CARD */
+.container {
+  width: 90%;
+  max-width: 350px;
   margin: auto;
 }
 
-.freq {
+/* PRICE BOX */
+.price-box {
+  border: 1px solid orange;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.price {
+  font-size: 22px;
+  margin-top: 5px;
+}
+
+/* BUTTON */
+button {
+  margin-top: 15px;
+  padding: 12px;
+  width: 80%;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  background: orange;
+  color: black;
+}
+
+/* SCORE CIRCLE */
+.score-circle {
+  margin: 25px auto;
+  width: 120px;
+  height: 120px;
+  border: 4px solid orange;
+  border-radius: 50%;
   display: flex;
+  align-items: center;
   justify-content: center;
+  font-size: 30px;
+}
+
+/* MATCH / DIFFERS */
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.circle-box {
+  width: 45%;
+}
+
+.small-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid orange;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.red {
+  border-color: red;
+}
+
+.percent {
+  margin-top: 5px;
+}
+
+/* CHART */
+.chart {
   margin-top: 20px;
 }
 
 .bar {
-  width: 10px;
-  margin: 2px;
+  display: inline-block;
+  width: 6%;
+  margin: 1%;
   background: orange;
 }
 </style>
@@ -85,235 +126,153 @@ select {
 
 <canvas id="matrix"></canvas>
 
-<!-- PAGE 1 -->
-<div id="page1" class="page active">
-  <h1>Digit Tracker Analysis Tool</h1>
-  <div id="status">Not Connected</div>
-  <button onclick="connect()">Connect WebSocket</button>
+<div class="header">
+  Digit Tracker Analysis Tool
+  <div class="live" id="status">Connecting...</div>
 </div>
 
-<!-- PAGE 2 -->
-<div id="page2" class="page">
+<div class="container">
 
-  <h2>Matches / Differs</h2>
+  <h3>Matches / Differs</h3>
 
-  <select id="symbol">
-    <option value="R_10">Vol 10</option>
-    <option value="R_25">Vol 25</option>
-    <option value="R_50">Vol 50</option>
-    <option value="R_75">Vol 75</option>
-    <option value="R_100">Vol 100</option>
-    <option value="1HZ10V">1s Vol 10</option>
-    <option value="1HZ25V">1s Vol 25</option>
-    <option value="1HZ50V">1s Vol 50</option>
-    <option value="1HZ75V">1s Vol 75</option>
-    <option value="1HZ100V">1s Vol 100</option>
-  </select>
+  <div class="price-box">
+    <div>Volatility 10 (1s) Index</div>
+    <div class="price" id="price">--</div>
+  </div>
 
-  <div class="price" id="price">----</div>
+  <button onclick="toggleAnalysis()" id="btn">START ANALYSIS</button>
 
-  <button onclick="toggle()" id="toggleBtn">START ANALYSIS</button>
+  <div class="score-circle" id="score">0</div>
 
-  <div class="circle" id="score">0</div>
-
-  <div style="display:flex; justify-content:center; gap:30px;">
-    <div>
-      <div class="circle" id="match">0%</div>
-      MATCH
+  <div class="row">
+    <div class="circle-box">
+      <div>MATCH</div>
+      <div class="small-circle" id="match">0</div>
+      <div class="percent" id="matchP">0%</div>
     </div>
-    <div>
-      <div class="circle" id="diff">0%</div>
-      DIFFERS
+
+    <div class="circle-box">
+      <div>DIFFERS</div>
+      <div class="small-circle red" id="diff">0</div>
+      <div class="percent" id="diffP">0%</div>
     </div>
   </div>
 
-  <h3 id="prediction"></h3>
-
-  <div class="freq" id="chart"></div>
+  <div class="chart" id="chart"></div>
 
 </div>
 
 <script>
 let ws;
-let ticks = [];
 let analyzing = false;
-let pingInterval;
+let digits = [];
 
-// ✅ YOUR APP ID EMBEDDED HERE
-const WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=131595";
-
-// CONNECT
 function connect() {
-  const status = document.getElementById("status");
-  status.innerText = "Connecting...";
-
-  ws = new WebSocket(WS_URL);
+  ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
 
   ws.onopen = () => {
-    status.innerText = "LIVE";
-    status.className = "live";
-
-    startPing();
-
-    document.getElementById("page1").classList.remove("active");
-    document.getElementById("page2").classList.add("active");
-  };
-
-  ws.onerror = () => {
-    status.innerText = "Connection Failed";
-    status.className = "fail";
-  };
-
-  ws.onclose = () => {
-    status.innerText = "Reconnecting...";
-    status.className = "fail";
-    stopPing();
-    setTimeout(connect, 3000);
+    document.getElementById("status").innerText = "LIVE";
+    ws.send(JSON.stringify({ticks: "R_10", subscribe: 1}));
   };
 
   ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-
-    if (data.history) {
-      ticks = data.history.prices.map(p => lastDigit(p));
-      update();
-      subscribe();
-    }
-
+    let data = JSON.parse(msg.data);
     if (data.tick) {
       let price = data.tick.quote;
       document.getElementById("price").innerText = price;
 
-      ticks.push(lastDigit(price));
-      ticks = ticks.slice(-45);
+      let lastDigit = parseInt(price.toString().slice(-1));
+      digits.push(lastDigit);
+      if (digits.length > 45) digits.shift();
 
-      if (analyzing) update();
+      if (analyzing) updateUI();
     }
+  };
+
+  ws.onclose = () => {
+    document.getElementById("status").innerText = "Connection Failed";
+    setTimeout(connect, 3000);
   };
 }
 
-// KEEP ALIVE
-function startPing() {
-  pingInterval = setInterval(() => {
-    if (ws && ws.readyState === 1) {
-      ws.send(JSON.stringify({ ping: 1 }));
-    }
-  }, 25000);
-}
+connect();
 
-function stopPing() {
-  clearInterval(pingInterval);
-}
-
-// START / STOP
-function toggle() {
-  if (!ws || ws.readyState !== 1) {
-    alert("Connect first");
-    return;
-  }
-
+function toggleAnalysis() {
   analyzing = !analyzing;
-  const btn = document.getElementById("toggleBtn");
-
-  if (analyzing) {
-    btn.innerText = "STOP ANALYSIS";
-
-    ws.send(JSON.stringify({
-      ticks_history: document.getElementById("symbol").value,
-      count: 45,
-      end: "latest"
-    }));
-
-  } else {
-    btn.innerText = "START ANALYSIS";
-  }
+  document.getElementById("btn").innerText =
+    analyzing ? "STOP ANALYSIS" : "START ANALYSIS";
 }
 
-// SUBSCRIBE
-function subscribe() {
-  ws.send(JSON.stringify({
-    ticks: document.getElementById("symbol").value,
-    subscribe: 1
-  }));
-}
-
-// LAST DIGIT
-function lastDigit(p) {
-  return parseInt(p.toString().slice(-1));
-}
-
-// ANALYSIS
-function update() {
+function updateUI() {
   let freq = Array(10).fill(0);
-  ticks.forEach(d => freq[d]++);
 
-  let matches = 0;
-  for (let i = 1; i < ticks.length; i++) {
-    if (ticks[i] === ticks[i - 1]) matches++;
-  }
+  digits.forEach(d => freq[d]++);
 
-  let matchP = (matches / ticks.length) * 100;
-  let diffP = 100 - matchP;
+  let match = freq[digits[digits.length-1]];
+  let diff = digits.length - match;
 
-  document.getElementById("match").innerText = matchP.toFixed(1) + "%";
-  document.getElementById("diff").innerText = diffP.toFixed(1) + "%";
+  document.getElementById("match").innerText = match;
+  document.getElementById("diff").innerText = diff;
 
-  let overdue = freq.filter(f => f === 0).length;
-  let score = Math.min(100, (overdue * 12) + matches * 2);
+  document.getElementById("matchP").innerText =
+    Math.round((match / digits.length) * 100) + "%";
 
-  document.getElementById("score").innerText = score;
+  document.getElementById("diffP").innerText =
+    Math.round((diff / digits.length) * 100) + "%";
 
-  let pred = "WAIT";
-  if (overdue >= 4) pred = "DIFFERS ⚡";
-  else if (matches >= 6) pred = "MATCH 🔥";
-
-  document.getElementById("prediction").innerText = pred;
+  document.getElementById("score").innerText =
+    Math.round((match / digits.length) * 10);
 
   drawChart(freq);
 }
 
-// CHART
 function drawChart(freq) {
   let chart = document.getElementById("chart");
   chart.innerHTML = "";
 
-  freq.forEach(f => {
+  freq.forEach(v => {
     let bar = document.createElement("div");
     bar.className = "bar";
-    bar.style.height = (f * 6) + "px";
+    bar.style.height = (v * 5) + "px";
     chart.appendChild(bar);
   });
 }
 
-// MATRIX
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+/* MATRIX EFFECT */
+let c = document.getElementById("matrix");
+let ctx = c.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+c.height = window.innerHeight;
+c.width = window.innerWidth;
 
 let letters = "0123456789";
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = Array(Math.floor(columns)).fill(1);
+letters = letters.split("");
 
-function drawMatrix() {
+let fontSize = 10;
+let columns = c.width / fontSize;
+
+let drops = [];
+for (let i = 0; i < columns; i++) drops[i] = 1;
+
+function draw() {
   ctx.fillStyle = "rgba(0,0,0,0.05)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0, 0, c.width, c.height);
 
-  ctx.fillStyle = "#00eaff";
+  ctx.fillStyle = "#0F0";
   ctx.font = fontSize + "px monospace";
 
   for (let i = 0; i < drops.length; i++) {
     let text = letters[Math.floor(Math.random()*letters.length)];
     ctx.fillText(text, i*fontSize, drops[i]*fontSize);
 
-    if (drops[i]*fontSize > canvas.height) drops[i] = 0;
+    if (drops[i]*fontSize > c.height && Math.random() > 0.975)
+      drops[i] = 0;
+
     drops[i]++;
   }
 }
 
-setInterval(drawMatrix, 80);
+setInterval(draw, 33);
 </script>
 
 </body>
