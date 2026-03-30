@@ -1,207 +1,258 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DigitFlowPro Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+        
+        body {
+            background-color: #000;
+            color: #FF8C00;
+            font-family: 'Source Code Pro', monospace;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-// --- CONFIGURATION ---
-const APP_ID = "131595"; 
-const REDIRECT_URI = "https://dollarheir-mcgvdxkd.manus.space/";
+        /* Matrix Background Effect */
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+            opacity: 0.15;
+        }
 
-// --- STYLES (Matrix Terminal Aesthetic) ---
-const styles = `
-  body { background: #000; color: #ff8c00; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
-  .matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.15; }
-  .app-container { padding: 15px; max-width: 450px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; }
-  
-  /* Page A: Login/Entry */
-  .entry-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
-  
-  /* Page B: Connection/Selection */
-  .market-select { background: rgba(20,20,20,0.8); border: 1px solid #ff8c00; color: #ff8c00; padding: 12px; width: 100%; border-radius: 8px; margin: 15px 0; font-family: inherit; }
-  
-  /* Page C: Analysis Stage */
-  .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #333; }
-  .live-dot { color: #00ff00; font-size: 0.7rem; animation: blink 1s infinite; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-  
-  .main-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px 0; }
-  .price-glow { font-size: 2.2rem; text-shadow: 0 0 10px #ff8c00; margin: 5px 0; }
-  
-  .circle-main { width: 130px; height: 130px; border: 3px solid #ff8c00; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; font-weight: bold; box-shadow: 0 0 15px rgba(255,140,0,0.3); position: relative; }
-  .circle-main.hot { border-color: #fff; box-shadow: 0 0 25px #ff8c00; animation: pulse 0.5s infinite alternate; }
-  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        .terminal-glow {
+            text-shadow: 0 0 10px #FF8C00;
+        }
 
-  .stats-row { display: flex; width: 100%; justify-content: space-around; margin: 15px 0; }
-  .circle-sub { width: 75px; height: 75px; border: 2px solid #ff8c00; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.9rem; }
-  .circle-sub b { font-size: 1.2rem; }
+        .neon-border {
+            border: 1px solid #FF8C00;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.2);
+        }
 
-  .chart-box { background: rgba(10,10,10,0.9); border: 1px solid #333; padding: 10px; border-radius: 5px; width: 100%; }
-  .bar-container { display: flex; align-items: flex-end; justify-content: space-between; height: 80px; padding-top: 15px; }
-  .bar { width: 18px; background: #ff8c00; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 5px #ff8c00; }
-  .bar.active { background: #fff; }
+        .btn-glow:active {
+            background: #FF8C00;
+            color: #000;
+            box-shadow: 0 0 20px #FF8C00;
+        }
 
-  .btn-terminal { background: transparent; border: 1px solid #ff8c00; color: #ff8c00; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.3s; width: 80%; }
-  .btn-terminal:active { background: #ff8c00; color: #000; }
-  .btn-stop { border-color: #ff4444; color: #ff4444; }
-`;
+        /* View Management */
+        .view { display: none; height: 100vh; padding: 20px; flex-direction: column; align-items: center; justify-content: center; }
+        .view.active { display: flex; }
 
-const DollarHeirTerminal = () => {
-  const [page, setPage] = useState<'A' | 'B' | 'C'>('A');
-  const [token, setToken] = useState(localStorage.getItem('deriv_token_hard_stop'));
-  const [market, setMarket] = useState("R_100");
-  const [price, setPrice] = useState("0.000");
-  const [lastDigit, setLastDigit] = useState("-");
-  const [tickHistory, setTickHistory] = useState<number[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const ws = useRef<WebSocket | null>(null);
+        /* Digit Animation */
+        .bar { transition: height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-  // 1. HARD-STOP TOKEN CAPTURE & AUTO-ROUTE
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenUrl = params.get('token1');
-    if (tokenUrl) {
-      localStorage.setItem('deriv_token_hard_stop', tokenUrl);
-      setToken(tokenUrl);
-      window.history.replaceState({}, document.title, "/"); 
-      setPage('B');
-    } else if (token) {
-      setPage('B');
-    }
-  }, []);
+        select {
+            background: #000;
+            border: 1px solid #FF8C00;
+            color: #FF8C00;
+            padding: 10px;
+            width: 80%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
 
-  // 2. DYNAMIC FREQUENCY LOGIC (Rolling 100 Ticks)
-  const frequencies = useMemo(() => {
-    const counts = new Array(10).fill(0);
-    if (tickHistory.length === 0) return counts;
-    tickHistory.forEach(digit => counts[digit]++);
-    return counts.map(c => (c / tickHistory.length) * 100);
-  }, [tickHistory]);
+    <canvas id="matrix-canvas"></canvas>
 
-  const hotDigit = frequencies.indexOf(Math.max(...frequencies));
-
-  // 3. WEBSOCKET CONTROLLER
-  const connectWebSocket = () => {
-    if (!token) return;
-    ws.current = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
-    
-    ws.current.onopen = () => ws.current?.send(JSON.stringify({ authorize: token }));
-    
-    ws.current.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      if (data.msg_type === 'authorize' && !data.error) {
-        setPage('B');
-      }
-      if (data.msg_type === 'tick') {
-        setPrice(data.tick.quote.toFixed(3));
-        const digit = Number(data.tick.quote.toString().slice(-1));
-        setLastDigit(digit.toString());
-        setTickHistory(prev => [...prev.slice(-99), digit]);
-      }
-      if (data.msg_type === 'history') {
-        const digits = data.history.prices.map((p: any) => Number(p.toString().slice(-1)));
-        setTickHistory(digits);
-        setPage('C');
-      }
-    };
-  };
-
-  const startAnalysis = () => {
-    setIsAnalyzing(true);
-    ws.current?.send(JSON.stringify({ 
-      ticks_history: market, 
-      subscribe: 1, 
-      count: 100, 
-      style: "ticks" 
-    }));
-  };
-
-  const login = () => window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&l=en&brand=deriv`;
-
-  return (
-    <div className="app-container">
-      <style>{styles}</style>
-      <div className="matrix-canvas" />
-
-      {/* PAGE A: INITIAL LANDING */}
-      {page === 'A' && (
-        <div className="entry-screen">
-          <h1 style={{letterSpacing: '5px'}}>DIGITFLOW PRO</h1>
-          <p style={{color: '#888', marginBottom: '40px'}}>V.3.0 SECURITY ENCRYPTED</p>
-          <button className="btn-terminal" onClick={login}>CONNECT TO DERIV</button>
-        </div>
-      )}
-
-      {/* PAGE B: MARKET SELECTION */}
-      {page === 'B' && (
-        <div className="entry-screen">
-          <h2>TERMINAL CONNECTED</h2>
-          <p>SELECT MARKET VOLATILITY</p>
-          <select className="market-select" value={market} onChange={(e) => setMarket(e.target.value)}>
-            <option value="R_10">Volatility 10 (1s) Index</option>
-            <option value="R_25">Volatility 25 Index</option>
-            <option value="R_50">Volatility 50 Index</option>
-            <option value="R_75">Volatility 75 Index</option>
-            <option value="R_100">Volatility 100 Index</option>
-          </select>
-          <button className="btn-terminal" onClick={() => { connectWebSocket(); startAnalysis(); }}>
-            INITIALIZE ANALYSIS
-          </button>
-        </div>
-      )}
-
-      {/* PAGE C: ANALYSIS STAGE */}
-      {page === 'C' && (
-        <>
-          <div className="header">
-            <span onClick={() => setPage('B')}>← BACK</span>
-            <span style={{fontSize: '0.7rem'}}>DIGITFLOWPRO</span>
-            <span className="live-dot">● LIVE</span>
-          </div>
-
-          <div className="main-stage">
-            <div style={{textAlign: 'center'}}>
-              <div style={{fontSize: '0.8rem', color: '#888'}}>{market.replace('_', ' ')} Index</div>
-              <div className="price-glow">{price}</div>
-            </div>
-
-            <button 
-              className={`btn-terminal ${isAnalyzing ? 'btn-stop' : ''}`} 
-              onClick={() => setIsAnalyzing(!isAnalyzing)}
-            >
-              {isAnalyzing ? 'STOP ANALYSIS' : 'RESUME ANALYSIS'}
-            </button>
-
-            <div className={`circle-main ${isAnalyzing && Number(lastDigit) === hotDigit ? 'hot' : ''}`}>
-              {lastDigit}
-            </div>
-
-            <div className="stats-row">
-              <div className="circle-sub">
-                <span>MATCH</span>
-                <b>{Math.max(...frequencies).toFixed(0)}%</b>
-              </div>
-              <div className="circle-sub">
-                <span>DIFFERS</span>
-                <b>{(100 - Math.max(...frequencies)).toFixed(0)}%</b>
-              </div>
-            </div>
-
-            <div className="chart-box">
-              <div style={{fontSize: '0.6rem', marginBottom: '8px'}}>DIGIT FREQUENCY (100 TICKS)</div>
-              <div className="bar-container">
-                {frequencies.map((f, i) => (
-                  <div key={i} style={{textAlign: 'center'}}>
-                    <div className={`bar ${i === hotDigit ? 'active' : ''}`} style={{height: `${f * 3}px`}}></div>
-                    <div style={{fontSize: '0.6rem', marginTop: '4px'}}>{i}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+    <div id="view-login" class="view active">
+        <img src="https://deriv.com/static/87f6e3c5-9273-40e1-8f83-e0ee444f3c2e.svg" width="120" class="mb-8">
+        <h1 class="text-xl mb-10 terminal-glow">DOLLAR HEIR TERMINAL</h1>
+        <button onclick="loginWithDeriv()" class="btn-glow border-2 border-[#FF8C00] px-8 py-4 rounded-lg font-bold">
+            CONNECT TO WEBSOCKET
+        </button>
+        <p id="conn-status" class="mt-4 text-xs opacity-50 text-red-500">WebSocket Disconnected</p>
     </div>
-  );
-};
 
-const root = document.getElementById('root');
-if (root) createRoot(root).render(<DollarHeirTerminal />);
-  
+    <div id="view-market" class="view">
+        <div class="w-full flex justify-between items-center mb-8">
+            <span onclick="showView('view-login')" class="cursor-pointer">← BACK</span>
+            <span class="font-bold">DigitFlowPro</span>
+            <span class="text-green-500 text-xs">● LIVE</span>
+        </div>
+        
+        <h2 class="mb-4">SELECT MARKET</h2>
+        <select id="market-select" class="mb-8">
+            <option value="R_10">Volatility 10 Index</option>
+            <option value="1Z10">Volatility 10 (1s) Index</option>
+            <option value="R_25">Volatility 25 Index</option>
+            <option value="1Z25">Volatility 25 (1s) Index</option>
+            <option value="R_50">Volatility 50 Index</option>
+            <option value="1Z50">Volatility 50 (1s) Index</option>
+            <option value="R_75">Volatility 75 Index</option>
+            <option value="1Z75">Volatility 75 (1s) Index</option>
+            <option value="R_100">Volatility 100 Index</option>
+            <option value="1Z100">Volatility 100 (1s) Index</option>
+        </select>
+
+        <button onclick="startAnalysis()" class="w-full bg-[#FF8C00] text-black py-4 rounded font-bold">
+            START ANALYSIS
+        </button>
+    </div>
+
+    <div id="view-analysis" class="view">
+        <div class="w-full flex justify-between items-center mb-4">
+            <span onclick="stopAnalysis()" class="cursor-pointer text-red-500">STOP ANALYSIS</span>
+            <span class="text-green-500 text-xs">● ANALYZING</span>
+        </div>
+
+        <div id="display-market-name" class="text-sm opacity-70">Volatility 10 (1s)</div>
+        <div id="live-price" class="text-4xl font-bold terminal-glow my-2">0.000</div>
+
+        <div class="relative w-32 h-32 border-4 border-[#FF8C00] rounded-full flex items-center justify-center my-6 shadow-[0_0_20px_rgba(255,140,0,0.4)]">
+            <span id="last-digit" class="text-5xl font-bold">0</span>
+        </div>
+
+        <div class="flex gap-10 mb-6">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 border-2 border-[#FF8C00] rounded-full flex items-center justify-center">
+                    <span id="match-count">0</span>
+                </div>
+                <span class="text-[10px] mt-2">MATCH</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500">
+                    <span id="differ-count">0</span>
+                </div>
+                <span class="text-[10px] mt-2 text-red-500">DIFFERS</span>
+            </div>
+        </div>
+
+        <div class="w-full neon-border p-4 bg-black/50 rounded">
+            <p class="text-[9px] mb-4 text-left">DIGIT FREQUENCY (100 TICKS)</p>
+            <div class="flex justify-between items-end h-24" id="chart-bars">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const APP_ID = "131595";
+        let ws;
+        let tickHistory = [];
+        let currentMarket = "";
+
+        // --- MATRIX BACKGROUND LOGIC ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 10;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#003300";
+            ctx.font = fontSize + "px arial";
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // --- NAVIGATION & AUTH ---
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function loginWithDeriv() {
+            window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&l=en&brand=deriv`;
+        }
+
+        // --- WEBSOCKET LOGIC ---
+        function initConnection() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token1') || localStorage.getItem('deriv_token');
+
+            if (token) {
+                localStorage.setItem('deriv_token', token);
+                ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
+                
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({ authorize: token }));
+                    document.getElementById('conn-status').innerText = "SYSTEM CONNECTED";
+                    document.getElementById('conn-status').className = "mt-4 text-xs text-green-500";
+                    // Clean URL
+                    window.history.replaceState({}, document.title, "/");
+                    showView('view-market');
+                };
+
+                ws.onmessage = (msg) => {
+                    const data = JSON.parse(msg.data);
+                    if (data.msg_type === 'tick') handleTick(data.tick);
+                    if (data.msg_type === 'history') handleHistory(data.history);
+                };
+            }
+        }
+
+        function startAnalysis() {
+            currentMarket = document.getElementById('market-select').value;
+            const marketName = document.getElementById('market-select').options[document.getElementById('market-select').selectedIndex].text;
+            document.getElementById('display-market-name').innerText = marketName;
+            
+            ws.send(JSON.stringify({ 
+                ticks_history: currentMarket, 
+                subscribe: 1, 
+                count: 100, 
+                style: "ticks" 
+            }));
+            
+            showView('view-analysis');
+        }
+
+        function stopAnalysis() {
+            ws.send(JSON.stringify({ forget_all: "ticks" }));
+            tickHistory = [];
+            showView('view-market');
+        }
+
+        function handleHistory(history) {
+            tickHistory = history.prices.map(p => p.toString().slice(-1));
+            updateUI();
+        }
+
+        function handleTick(tick) {
+            document.getElementById('live-price').innerText = tick.quote.toFixed(3);
+            const digit = tick.quote.toString().slice(-1);
+            document.getElementById('last-digit').innerText = digit;
+            
+            tickHistory.push(digit);
+            if (tickHistory.length > 100) tickHistory.shift();
+            updateUI();
+        }
+
+        function updateUI() {
+            const counts = new Array(10).fill(0);
+            tickHistory.forEach(d => counts[Number(d)]++);
+            
+            const chartArea = document.getElementById('chart-bars');
+            chartArea.innerHTML = "";
+            
+            counts.forEach((count, i) => {
+                const percentage = (count / tickHistory.length) * 100 || 0;
+                const bar = document.createElement('div');
+                bar.className = "flex flex-col items-center w-full";
+                bar.innerHTML = `
+                    <div class="bar w-2 bg-[#FF8C00] shadow-[0_0_5px_#FF8C00]" style="height: ${percentage * 2}px"></div>
+                    <span class="text-[8px] mt-1">${i}</span>
+                `;
+                chartArea.appendChild(bar);
+            });
+        }
+
+        initConnection();
+    </script>
+</body>
+</html>
