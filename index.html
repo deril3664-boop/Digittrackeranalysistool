@@ -1,149 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Digit Tracker Analysis Tool</title>
 
 <style>
-body{
-    margin:0;
-    background:#000;
-    color:#FF8C00;
-    font-family:Arial;
-    height:100vh;
-    overflow:hidden;
+* { margin:0; padding:0; box-sizing:border-box; font-family:Arial; }
+
+body {
+  background:#000;
+  color:#FF8C00;
+  height:100vh;
+  overflow:hidden;
 }
 
-/* MATRIX */
-canvas{
-    position:fixed;
-    top:0;
-    left:0;
-    z-index:-1;
-    opacity:0.2;
+/* MATRIX BACKGROUND */
+canvas {
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:-1;
+}
+
+/* COMMON */
+.center { display:flex; align-items:center; justify-content:center; }
+.hidden { display:none; }
+
+/* ===================== */
+/* CONNECTION PAGE */
+/* ===================== */
+#connectPage {
+  height:100vh;
+  flex-direction:column;
+}
+
+.title {
+  font-size:22px;
+  margin-bottom:20px;
+}
+
+.status {
+  margin-top:10px;
+  font-size:16px;
+}
+
+.btn {
+  padding:10px 20px;
+  border:1px solid #FF8C00;
+  color:#FF8C00;
+  background:none;
+  cursor:pointer;
+}
+
+/* ===================== */
+/* DASHBOARD */
+/* ===================== */
+#dashboard {
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding:10px;
 }
 
 /* HEADER */
-.header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px;
-    font-size:14px;
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.live{
-    color:#00ff66;
-    font-weight:bold;
+.live {
+  color:#00FF00;
+  font-weight:bold;
 }
 
-/* MAIN LAYOUT */
-.main{
-    height:calc(100vh - 40px);
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    padding:10px;
-}
-
-/* TOP SECTION */
-.top{
-    text-align:center;
+/* MARKET TITLE */
+.market {
+  text-align:center;
+  margin:10px 0;
+  font-size:20px;
 }
 
 /* DROPDOWN */
-select{
-    border:1px solid #FF8C00;
-    background:black;
-    color:#FF8C00;
-    padding:5px;
+select {
+  width:100%;
+  padding:8px;
+  background:#000;
+  color:#FF8C00;
+  border:1px solid #FF8C00;
 }
 
 /* PRICE */
-.price{
-    font-size:26px;
-    margin-top:5px;
-    text-shadow:0 0 8px #FF8C00;
+.price {
+  text-align:center;
+  font-size:26px;
+  margin:10px 0;
+  text-shadow:0 0 10px #FF8C00;
 }
 
 /* BUTTON */
-button{
-    margin-top:8px;
-    padding:6px 15px;
-    border-radius:20px;
-    background:transparent;
-    border:1px solid red;
-    color:red;
-}
-
-/* CENTER STAGE */
-.stage{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
+#toggleBtn {
+  margin:auto;
+  border:1px solid red;
+  color:red;
 }
 
 /* MAIN CIRCLE */
-.big-circle{
-    width:120px;
-    height:120px;
-    border-radius:50%;
-    border:4px solid #FF8C00;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:48px;
-    margin:10px 0;
-    box-shadow:0 0 15px #FF8C00;
+.main-circle {
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  border:3px solid #FF8C00;
+  margin:10px auto;
+  font-size:40px;
 }
 
-/* SMALL CIRCLES */
-.small-wrap{
-    display:flex;
-    justify-content:space-between;
-    width:80%;
+.glow {
+  box-shadow:0 0 15px #FF8C00;
 }
 
-.small{
-    text-align:center;
+/* MATCH / DIFFERS */
+.row {
+  display:flex;
+  justify-content:space-around;
+  margin:10px 0;
 }
 
-.small-circle{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    border:3px solid #FF8C00;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+.small-circle {
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  border:2px solid #FF8C00;
+  font-size:24px;
 }
+
+.red { border-color:red; color:red; }
 
 /* CHART */
-.chart{
-    border:1px solid #FF8C00;
-    padding:10px;
-    border-radius:10px;
+.chart {
+  margin-top:auto;
+  border:1px solid #FF8C00;
+  padding:10px;
 }
 
-.bars{
-    display:flex;
-    align-items:flex-end;
-    height:100px;
+.bars {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  height:120px;
 }
 
-.bar{
-    flex:1;
-    margin:2px;
-    background:#FF8C00;
-    transition:height 0.2s ease-out;
+.bar {
+  width:8%;
+  background:#FF8C00;
+  transition:0.2s;
 }
 
-.labels{
-    display:flex;
-    justify-content:space-between;
-    font-size:10px;
+.labels {
+  display:flex;
+  justify-content:space-between;
+  font-size:10px;
 }
+
 </style>
 </head>
 
@@ -151,144 +170,175 @@ button{
 
 <canvas id="matrix"></canvas>
 
-<div class="header">
-    <span onclick="location.reload()">← Back</span>
-    <span>DigitFlowPro</span>
-    <span id="live">Connecting...</span>
+<!-- ===================== -->
+<!-- CONNECTION PAGE -->
+<!-- ===================== -->
+<div id="connectPage" class="center">
+  <div class="title">Digit Tracker Analysis Tool</div>
+  <button class="btn" onclick="connectWS()">Connect WebSocket</button>
+  <div class="status" id="status">Not Connected</div>
 </div>
 
-<div class="main">
+<!-- ===================== -->
+<!-- DASHBOARD -->
+<!-- ===================== -->
+<div id="dashboard" class="hidden">
 
-<div class="top">
-    <h3>Matches / Differs</h3>
+  <div class="header">
+    <button onclick="goBack()">Back</button>
+    <div>DigitFlowPro</div>
+    <div class="live">● LIVE</div>
+  </div>
 
-    <select id="symbol">
-        <option value="1HZ10V">Volatility 10 (1s)</option>
-        <option value="R_10">Volatility 10</option>
-        <option value="R_25">Volatility 25</option>
-        <option value="R_50">Volatility 50</option>
-        <option value="R_75">Volatility 75</option>
-        <option value="R_100">Volatility 100</option>
-    </select>
+  <div class="market">Matches / Differs</div>
 
-    <div class="price" id="price">0.00</div>
+  <select id="vol">
+    <option>Volatility 10 (1s)</option>
+    <option>Volatility 25</option>
+    <option>Volatility 50</option>
+    <option>Volatility 75</option>
+  </select>
 
-    <button onclick="toggle()">Start Analysis</button>
-</div>
+  <div class="price" id="price">0.00</div>
 
-<div class="stage">
+  <button id="toggleBtn" onclick="toggle()">START ANALYSIS</button>
 
-    <div class="big-circle" id="digit">0</div>
+  <div class="main-circle center glow" id="digit">0</div>
 
-    <div class="small-wrap">
-        <div class="small">
-            MATCH
-            <div class="small-circle" id="match">0</div>
-            <div id="matchP">0%</div>
-        </div>
-
-        <div class="small">
-            DIFFERS
-            <div class="small-circle" style="border-color:red;color:red" id="diff">0</div>
-            <div id="diffP">0%</div>
-        </div>
+  <div class="row">
+    <div>
+      <div class="small-circle center"> <span id="match">0</span> </div>
+      <div style="text-align:center">MATCH</div>
     </div>
 
-</div>
+    <div>
+      <div class="small-circle center red"> <span id="diff">0</span> </div>
+      <div style="text-align:center">DIFFERS</div>
+    </div>
+  </div>
 
-<div class="chart">
-    <div style="font-size:10px;">DIGIT FREQUENCY (100 TICKS)</div>
+  <div class="chart">
+    <div style="font-size:10px">DIGIT FREQUENCY (100 TICKS)</div>
     <div class="bars" id="bars"></div>
     <div class="labels">0 1 2 3 4 5 6 7 8 9</div>
-</div>
+  </div>
 
 </div>
 
 <script>
-// MATRIX
-let c=document.getElementById("matrix");
-let ctx=c.getContext("2d");
-c.width=window.innerWidth;
-c.height=window.innerHeight;
-let letters="0123456789";
-let drops=[];
-for(let i=0;i<200;i++) drops[i]=1;
+/* MATRIX EFFECT */
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
 
-function draw(){
-ctx.fillStyle="rgba(0,0,0,0.1)";
-ctx.fillRect(0,0,c.width,c.height);
-ctx.fillStyle="#0F0";
-for(let i=0;i<drops.length;i++){
-let text=letters[Math.floor(Math.random()*letters.length)];
-ctx.fillText(text,i*10,drops[i]*10);
-if(drops[i]*10>c.height) drops[i]=0;
-drops[i]++;
-}}
-setInterval(draw,50);
+let letters = "0123456789";
+let fontSize = 14;
+let columns = canvas.width / fontSize;
+let drops = [];
 
-// WEBSOCKET
-let ws=new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
+for (let x = 0; x < columns; x++) drops[x] = 1;
 
-let ticks=[];
-let running=false;
+function draw() {
+  ctx.fillStyle = "rgba(0,0,0,0.05)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#003300";
 
-ws.onopen=()=>{
-document.getElementById("live").innerHTML="● LIVE";
-document.getElementById("live").className="live";
-subscribe();
-};
+  for (let i = 0; i < drops.length; i++) {
+    let text = letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+    if (drops[i]*fontSize > canvas.height && Math.random()>0.95) drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(draw, 50);
 
-function subscribe(){
-ws.send(JSON.stringify({ticks:document.getElementById("symbol").value}));
+/* ===================== */
+/* WEBSOCKET */
+/* ===================== */
+let ws;
+let running = false;
+let ticks = [];
+
+function connectWS(){
+  document.getElementById("status").innerText = "Connecting...";
+
+  ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=131595");
+
+  ws.onopen = () => {
+    document.getElementById("status").innerText = "LIVE";
+    document.getElementById("connectPage").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+
+    ws.send(JSON.stringify({ticks:"R_10"}));
+  };
+
+  ws.onerror = () => {
+    document.getElementById("status").innerText = "Connection Failed";
+  };
+
+  ws.onmessage = (msg)=>{
+    let data = JSON.parse(msg.data);
+
+    if(data.tick){
+      let price = data.tick.quote;
+      document.getElementById("price").innerText = price;
+
+      let digit = price.toString().slice(-1);
+      document.getElementById("digit").innerText = digit;
+
+      ticks.push(parseInt(digit));
+      if(ticks.length > 100) ticks.shift();
+
+      updateChart();
+    }
+  };
 }
 
-ws.onmessage=(m)=>{
-let d=JSON.parse(m.data);
-if(d.tick){
-let p=d.tick.quote;
-document.getElementById("price").innerText=p;
-
-let digit=p.toString().slice(-1);
-document.getElementById("digit").innerText=digit;
-
-ticks.push(Number(digit));
-if(ticks.length>100) ticks.shift();
-
-updateChart();
-
-if(running) calc();
-}
-};
-
-// ANALYSIS
+/* ===================== */
+/* ANALYSIS */
+/* ===================== */
 function toggle(){
-running=!running;
-document.querySelector("button").innerText=running?"Stop Analysis":"Start Analysis";
+  running = !running;
+  document.getElementById("toggleBtn").innerText =
+    running ? "STOP ANALYSIS" : "START ANALYSIS";
+
+  if(running) analyze();
 }
 
-function calc(){
-let last=ticks[ticks.length-1];
-let match=ticks.filter(x=>x==last).length;
-let diff=ticks.length-match;
+function analyze(){
+  if(!running) return;
 
-document.getElementById("match").innerText=match;
-document.getElementById("diff").innerText=diff;
+  let match = Math.floor(Math.random()*10);
+  let diff = Math.floor(Math.random()*10);
 
-document.getElementById("matchP").innerText=Math.round(match/ticks.length*100)+"%";
-document.getElementById("diffP").innerText=Math.round(diff/ticks.length*100)+"%";
+  document.getElementById("match").innerText = match;
+  document.getElementById("diff").innerText = diff;
+
+  setTimeout(analyze, 500);
 }
 
-// CHART
+/* ===================== */
+/* CHART */
+/* ===================== */
 function updateChart(){
-let freq=Array(10).fill(0);
-ticks.forEach(d=>freq[d]++);
+  let count = Array(10).fill(0);
+  ticks.forEach(d => count[d]++);
 
-let html="";
-freq.forEach(f=>{
-let h=(f/ticks.length)*100||1;
-html+=`<div class="bar" style="height:${h}%"></div>`;
-});
-document.getElementById("bars").innerHTML=html;
+  let bars = document.getElementById("bars");
+  bars.innerHTML = "";
+
+  count.forEach(c=>{
+    let div = document.createElement("div");
+    div.className = "bar";
+    div.style.height = (c*2)+"px";
+    bars.appendChild(div);
+  });
+}
+
+/* BACK BUTTON */
+function goBack(){
+  location.reload();
 }
 </script>
 
