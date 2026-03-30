@@ -1,114 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DigitFlowPro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digit Tracker Analysis Tool</title>
 
 <style>
-* {
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial, sans-serif;
-}
-
 body {
+  margin:0;
   background:#000;
+  color:#FF8C00;
+  font-family:Arial;
   height:100vh;
   overflow:hidden;
+}
+
+.center {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.hidden { display:none; }
+
+/* ===== LANDING ===== */
+#landing h1 { font-size:20px; margin-bottom:20px; }
+#status { margin-top:10px; }
+
+button {
+  padding:10px 20px;
+  border:1px solid #FF8C00;
+  background:none;
   color:#FF8C00;
 }
 
-/* ===== MATRIX BACKGROUND ===== */
-canvas {
-  position:fixed;
-  top:0;
-  left:0;
-  z-index:-1;
-}
+/* ===== DASHBOARD ===== */
+#dashboard { padding:10px; height:100vh; }
 
-/* ===== HEADER ===== */
 .header {
-  height:50px;
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  padding:0 12px;
-  font-size:14px;
 }
 
-.live {
-  color:#00FF00;
-  font-weight:bold;
-}
+.live { color:#00FF00; }
 
-/* ===== TITLE ===== */
-.title {
+.title { text-align:center; margin:10px; }
+
+.index-box {
+  border:1px solid #FF8C00;
+  border-radius:10px;
+  padding:10px;
   text-align:center;
-  font-size:20px;
-  margin-top:5px;
+}
+
+.price {
+  font-size:26px;
   text-shadow:0 0 10px #FF8C00;
 }
 
-/* ===== INDEX BOX ===== */
-.index-box {
-  width:90%;
-  margin:10px auto;
-  border:1px solid #FF8C00;
-  border-radius:12px;
-  padding:10px;
-  text-align:center;
-  backdrop-filter:blur(4px);
-}
-
-/* ===== PRICE ===== */
-.price {
-  text-align:center;
-  font-size:28px;
-  margin-top:5px;
-  text-shadow:0 0 12px #FF8C00;
-}
-
-/* ===== BUTTON ===== */
-.btn {
-  display:block;
-  margin:10px auto;
-  padding:6px 16px;
-  border-radius:20px;
-  border:1px solid red;
-  color:red;
-  background:none;
-}
-
-/* ===== MAIN CIRCLE ===== */
 .main-circle {
   width:130px;
   height:130px;
-  margin:10px auto;
-  border-radius:50%;
   border:3px solid #FF8C00;
+  border-radius:50%;
+  margin:10px auto;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:48px;
-  box-shadow:0 0 15px #FF8C00;
+  font-size:40px;
 }
 
-/* ===== SUB BOX ===== */
-.sub-box {
-  width:90%;
-  margin:10px auto;
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:12px;
-  padding:10px;
+.row {
   display:flex;
   justify-content:space-around;
-}
-
-/* ===== SMALL CIRCLES ===== */
-.small {
-  text-align:center;
 }
 
 .small-circle {
@@ -119,142 +84,167 @@ canvas {
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:28px;
-  margin-bottom:5px;
 }
 
 .red {
-  border-color:#FF4444;
-  color:#FF4444;
+  border-color:red;
+  color:red;
 }
 
-/* ===== CHART ===== */
-.chart-box {
-  width:90%;
-  margin:10px auto;
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:12px;
+.chart {
+  margin-top:10px;
+  border:1px solid #FF8C00;
   padding:10px;
-}
-
-.chart-title {
-  font-size:10px;
-  margin-bottom:5px;
 }
 
 .bars {
   display:flex;
+  height:100px;
   align-items:flex-end;
-  justify-content:space-between;
-  height:120px;
 }
 
 .bar {
-  width:8%;
+  flex:1;
+  margin:2px;
   background:#FF8C00;
-  transition:height 0.2s ease;
 }
-
-.labels {
-  display:flex;
-  justify-content:space-between;
-  font-size:10px;
-  margin-top:5px;
-}
-
 </style>
 </head>
 
 <body>
 
-<canvas id="matrix"></canvas>
-
-<!-- HEADER -->
-<div class="header">
-  <div>← Back</div>
-  <div>DigitFlowPro</div>
-  <div class="live">● LIVE</div>
+<!-- ================= LANDING ================= -->
+<div id="landing" class="center">
+  <h1>Digit Tracker Analysis Tool</h1>
+  <button onclick="connect()">Connect WebSocket</button>
+  <div id="status">Not Connected</div>
 </div>
 
-<!-- TITLE -->
-<div class="title">Matches / Differs</div>
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard" class="hidden">
 
-<!-- INDEX -->
-<div class="index-box">
-  Volatility 10 (1s) Index
-  <div class="price" id="price">9780.34</div>
-</div>
-
-<!-- BUTTON -->
-<button class="btn">Stop Analysis</button>
-
-<!-- MAIN CIRCLE -->
-<div class="main-circle" id="digit">0</div>
-
-<!-- MATCH / DIFFERS -->
-<div class="sub-box">
-  <div class="small">
-    <div class="small-circle">0</div>
-    <div>MATCH</div>
-    <div>0%</div>
+  <div class="header">
+    <button onclick="goBack()">Back</button>
+    <div>DigitFlowPro</div>
+    <div class="live">● LIVE</div>
   </div>
 
-  <div class="small">
-    <div class="small-circle red">0</div>
-    <div>DIFFERS</div>
-    <div>0%</div>
-  </div>
-</div>
+  <div class="title">Matches / Differs</div>
 
-<!-- CHART -->
-<div class="chart-box">
-  <div class="chart-title">DIGIT FREQUENCY (100 TICKS)</div>
-  <div class="bars" id="bars"></div>
-  <div class="labels">0 1 2 3 4 5 6 7 8 9</div>
+  <select id="vol">
+    <option>Volatility 10 (1s)</option>
+  </select>
+
+  <div class="index-box">
+    Volatility 10 (1s)
+    <div class="price" id="price">0.00</div>
+  </div>
+
+  <button onclick="toggle()" id="toggleBtn">START ANALYSIS</button>
+
+  <div class="main-circle" id="digit">0</div>
+
+  <div class="row">
+    <div>
+      <div class="small-circle" id="match">0</div>
+      <div>MATCH</div>
+    </div>
+
+    <div>
+      <div class="small-circle red" id="diff">0</div>
+      <div>DIFFERS</div>
+    </div>
+  </div>
+
+  <div class="chart">
+    <div>DIGIT FREQUENCY (100 TICKS)</div>
+    <div class="bars" id="bars"></div>
+  </div>
+
 </div>
 
 <script>
-/* MATRIX EFFECT */
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+let ws;
+let ticks=[];
+let running=false;
 
-canvas.height = window.innerHeight;
-canvas.width = window.innerWidth;
+/* CONNECT */
+function connect(){
+  document.getElementById("status").innerText="Connecting...";
 
-let letters = "0123456789";
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = [];
+  ws=new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=131595");
 
-for(let i=0;i<columns;i++) drops[i]=1;
+  ws.onopen=()=>{
+    document.getElementById("status").innerText="LIVE";
 
-function draw(){
-  ctx.fillStyle="rgba(0,0,0,0.05)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+    // REDIRECT
+    setTimeout(()=>{
+      document.getElementById("landing").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+    },1000);
 
-  ctx.fillStyle="#003300";
+    ws.send(JSON.stringify({ticks:"R_10"}));
+  };
 
-  for(let i=0;i<drops.length;i++){
-    let text=letters[Math.floor(Math.random()*letters.length)];
-    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+  ws.onerror=()=>{
+    document.getElementById("status").innerText="Connection Failed";
+  };
 
-    if(drops[i]*fontSize>canvas.height && Math.random()>0.95){
-      drops[i]=0;
+  ws.onmessage=(msg)=>{
+    let data=JSON.parse(msg.data);
+
+    if(data.tick){
+      let price=data.tick.quote;
+      document.getElementById("price").innerText=price;
+
+      let digit=price.toString().slice(-1);
+      document.getElementById("digit").innerText=digit;
+
+      ticks.push(Number(digit));
+      if(ticks.length>100) ticks.shift();
+
+      updateChart();
     }
-
-    drops[i]++;
-  }
+  };
 }
-setInterval(draw,50);
 
-/* CHART MOCK (for UI only) */
-const bars = document.getElementById("bars");
+/* ANALYSIS */
+function toggle(){
+  running=!running;
+  document.getElementById("toggleBtn").innerText=
+    running?"STOP ANALYSIS":"START ANALYSIS";
 
-for(let i=0;i<10;i++){
-  let bar=document.createElement("div");
-  bar.className="bar";
-  bar.style.height=(Math.random()*100)+"px";
-  bars.appendChild(bar);
+  if(running) analyze();
+}
+
+function analyze(){
+  if(!running) return;
+
+  document.getElementById("match").innerText=Math.floor(Math.random()*10);
+  document.getElementById("diff").innerText=Math.floor(Math.random()*10);
+
+  setTimeout(analyze,500);
+}
+
+/* CHART */
+function updateChart(){
+  let count=Array(10).fill(0);
+  ticks.forEach(d=>count[d]++);
+
+  let bars=document.getElementById("bars");
+  bars.innerHTML="";
+
+  count.forEach(c=>{
+    let b=document.createElement("div");
+    b.className="bar";
+    b.style.height=(c*2)+"px";
+    bars.appendChild(b);
+  });
+}
+
+/* BACK */
+function goBack(){
+  location.reload();
 }
 </script>
 
