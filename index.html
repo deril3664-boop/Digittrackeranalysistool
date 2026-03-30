@@ -1,276 +1,207 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
 
-<title>DigitFlowPro</title>
+// --- CONFIGURATION ---
+const APP_ID = "131595"; 
+const REDIRECT_URI = "https://dollarheir-mcgvdxkd.manus.space/";
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
+// --- STYLES (Matrix Terminal Aesthetic) ---
+const styles = `
+  body { background: #000; color: #ff8c00; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
+  .matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.15; }
+  .app-container { padding: 15px; max-width: 450px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; }
+  
+  /* Page A: Login/Entry */
+  .entry-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+  
+  /* Page B: Connection/Selection */
+  .market-select { background: rgba(20,20,20,0.8); border: 1px solid #ff8c00; color: #ff8c00; padding: 12px; width: 100%; border-radius: 8px; margin: 15px 0; font-family: inherit; }
+  
+  /* Page C: Analysis Stage */
+  .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #333; }
+  .live-dot { color: #00ff00; font-size: 0.7rem; animation: blink 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+  
+  .main-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px 0; }
+  .price-glow { font-size: 2.2rem; text-shadow: 0 0 10px #ff8c00; margin: 5px 0; }
+  
+  .circle-main { width: 130px; height: 130px; border: 3px solid #ff8c00; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; font-weight: bold; box-shadow: 0 0 15px rgba(255,140,0,0.3); position: relative; }
+  .circle-main.hot { border-color: #fff; box-shadow: 0 0 25px #ff8c00; animation: pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-body{
-  background:#000;
-  color:#ff8c00;
-  font-family:Arial;
-  height:100vh;
-  overflow:hidden;
-}
+  .stats-row { display: flex; width: 100%; justify-content: space-around; margin: 15px 0; }
+  .circle-sub { width: 75px; height: 75px; border: 2px solid #ff8c00; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .circle-sub b { font-size: 1.2rem; }
 
-/* MAIN */
-#app{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  padding:2vh 3vw;
-}
+  .chart-box { background: rgba(10,10,10,0.9); border: 1px solid #333; padding: 10px; border-radius: 5px; width: 100%; }
+  .bar-container { display: flex; align-items: flex-end; justify-content: space-between; height: 80px; padding-top: 15px; }
+  .bar { width: 18px; background: #ff8c00; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 5px #ff8c00; }
+  .bar.active { background: #fff; }
 
-/* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:2.5vw;
-}
+  .btn-terminal { background: transparent; border: 1px solid #ff8c00; color: #ff8c00; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.3s; width: 80%; }
+  .btn-terminal:active { background: #ff8c00; color: #000; }
+  .btn-stop { border-color: #ff4444; color: #ff4444; }
+`;
 
-.header button{
-  background:none;
-  border:none;
-  color:#ff8c00;
-  font-size:3vw;
-}
+const DollarHeirTerminal = () => {
+  const [page, setPage] = useState<'A' | 'B' | 'C'>('A');
+  const [token, setToken] = useState(localStorage.getItem('deriv_token_hard_stop'));
+  const [market, setMarket] = useState("R_100");
+  const [price, setPrice] = useState("0.000");
+  const [lastDigit, setLastDigit] = useState("-");
+  const [tickHistory, setTickHistory] = useState<number[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const ws = useRef<WebSocket | null>(null);
 
-.live{
-  color:#00ff00;
-  font-weight:bold;
-}
+  // 1. HARD-STOP TOKEN CAPTURE & AUTO-ROUTE
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenUrl = params.get('token1');
+    if (tokenUrl) {
+      localStorage.setItem('deriv_token_hard_stop', tokenUrl);
+      setToken(tokenUrl);
+      window.history.replaceState({}, document.title, "/"); 
+      setPage('B');
+    } else if (token) {
+      setPage('B');
+    }
+  }, []);
 
-/* TOP */
-.top{
-  text-align:center;
-}
+  // 2. DYNAMIC FREQUENCY LOGIC (Rolling 100 Ticks)
+  const frequencies = useMemo(() => {
+    const counts = new Array(10).fill(0);
+    if (tickHistory.length === 0) return counts;
+    tickHistory.forEach(digit => counts[digit]++);
+    return counts.map(c => (c / tickHistory.length) * 100);
+  }, [tickHistory]);
 
-.top h3{
-  font-size:3.5vw;
-  margin:0.5vh 0;
-}
+  const hotDigit = frequencies.indexOf(Math.max(...frequencies));
 
-select{
-  width:100%;
-  padding:1vh;
-  font-size:3vw;
-  background:#111;
-  border:1px solid #ff8c00;
-  color:#ff8c00;
-}
+  // 3. WEBSOCKET CONTROLLER
+  const connectWebSocket = () => {
+    if (!token) return;
+    ws.current = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
+    
+    ws.current.onopen = () => ws.current?.send(JSON.stringify({ authorize: token }));
+    
+    ws.current.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.msg_type === 'authorize' && !data.error) {
+        setPage('B');
+      }
+      if (data.msg_type === 'tick') {
+        setPrice(data.tick.quote.toFixed(3));
+        const digit = Number(data.tick.quote.toString().slice(-1));
+        setLastDigit(digit.toString());
+        setTickHistory(prev => [...prev.slice(-99), digit]);
+      }
+      if (data.msg_type === 'history') {
+        const digits = data.history.prices.map((p: any) => Number(p.toString().slice(-1)));
+        setTickHistory(digits);
+        setPage('C');
+      }
+    };
+  };
 
-.price{
-  font-size:6vw;
-  text-shadow:0 0 8px #ff8c00;
-}
+  const startAnalysis = () => {
+    setIsAnalyzing(true);
+    ws.current?.send(JSON.stringify({ 
+      ticks_history: market, 
+      subscribe: 1, 
+      count: 100, 
+      style: "ticks" 
+    }));
+  };
 
-/* BUTTON */
-#toggle{
-  font-size:3vw;
-  padding:1vh 3vw;
-  margin:1vh auto;
-  border:1px solid red;
-  background:transparent;
-  color:red;
-}
+  const login = () => window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&l=en&brand=deriv`;
 
-/* STAGE */
-.stage{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
+  return (
+    <div className="app-container">
+      <style>{styles}</style>
+      <div className="matrix-canvas" />
 
-/* MAIN CIRCLE */
-.main-circle{
-  width:28vw;
-  height:28vw;
-  border:0.8vw solid #ff8c00;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:10vw;
-  box-shadow:0 0 2vw #ff8c00;
-}
+      {/* PAGE A: INITIAL LANDING */}
+      {page === 'A' && (
+        <div className="entry-screen">
+          <h1 style={{letterSpacing: '5px'}}>DIGITFLOW PRO</h1>
+          <p style={{color: '#888', marginBottom: '40px'}}>V.3.0 SECURITY ENCRYPTED</p>
+          <button className="btn-terminal" onClick={login}>CONNECT TO DERIV</button>
+        </div>
+      )}
 
-/* SUB */
-.sub{
-  display:flex;
-  justify-content:space-between;
-  width:70%;
-  margin-top:1vh;
-}
+      {/* PAGE B: MARKET SELECTION */}
+      {page === 'B' && (
+        <div className="entry-screen">
+          <h2>TERMINAL CONNECTED</h2>
+          <p>SELECT MARKET VOLATILITY</p>
+          <select className="market-select" value={market} onChange={(e) => setMarket(e.target.value)}>
+            <option value="R_10">Volatility 10 (1s) Index</option>
+            <option value="R_25">Volatility 25 Index</option>
+            <option value="R_50">Volatility 50 Index</option>
+            <option value="R_75">Volatility 75 Index</option>
+            <option value="R_100">Volatility 100 Index</option>
+          </select>
+          <button className="btn-terminal" onClick={() => { connectWebSocket(); startAnalysis(); }}>
+            INITIALIZE ANALYSIS
+          </button>
+        </div>
+      )}
 
-.small-circle{
-  width:15vw;
-  height:15vw;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:4vw;
-}
+      {/* PAGE C: ANALYSIS STAGE */}
+      {page === 'C' && (
+        <>
+          <div className="header">
+            <span onClick={() => setPage('B')}>← BACK</span>
+            <span style={{fontSize: '0.7rem'}}>DIGITFLOWPRO</span>
+            <span className="live-dot">● LIVE</span>
+          </div>
 
-.match{ border:0.5vw solid #ff8c00; }
-.diff{ border:0.5vw solid red; }
+          <div className="main-stage">
+            <div style={{textAlign: 'center'}}>
+              <div style={{fontSize: '0.8rem', color: '#888'}}>{market.replace('_', ' ')} Index</div>
+              <div className="price-glow">{price}</div>
+            </div>
 
-.percent{
-  font-size:2.5vw;
-  text-align:center;
-}
+            <button 
+              className={`btn-terminal ${isAnalyzing ? 'btn-stop' : ''}`} 
+              onClick={() => setIsAnalyzing(!isAnalyzing)}
+            >
+              {isAnalyzing ? 'STOP ANALYSIS' : 'RESUME ANALYSIS'}
+            </button>
 
-/* CHART */
-.chart{
-  height:20vh;
-  border:1px solid #ff8c00;
-  padding:1vh;
-}
+            <div className={`circle-main ${isAnalyzing && Number(lastDigit) === hotDigit ? 'hot' : ''}`}>
+              {lastDigit}
+            </div>
 
-.chart-title{
-  font-size:2.5vw;
-}
+            <div className="stats-row">
+              <div className="circle-sub">
+                <span>MATCH</span>
+                <b>{Math.max(...frequencies).toFixed(0)}%</b>
+              </div>
+              <div className="circle-sub">
+                <span>DIFFERS</span>
+                <b>{(100 - Math.max(...frequencies)).toFixed(0)}%</b>
+              </div>
+            </div>
 
-.bars{
-  display:flex;
-  align-items:flex-end;
-  height:14vh;
-}
-
-.bar{
-  width:8%;
-  margin:0 1%;
-  background:#ff8c00;
-  transition:height .2s;
-}
-</style>
-</head>
-
-<body>
-
-<div id="app">
-
-<!-- HEADER -->
-<div class="header">
-  <button onclick="location.reload()">←</button>
-  <div>DigitFlowPro</div>
-  <div class="live">● LIVE</div>
-</div>
-
-<!-- TOP -->
-<div class="top">
-  <h3>Matches / Differs</h3>
-  <select id="symbol"></select>
-  <div id="price" class="price">0.00</div>
-</div>
-
-<!-- STAGE -->
-<div class="stage">
-
-  <button id="toggle">START</button>
-
-  <div class="main-circle" id="digit">0</div>
-
-  <div class="sub">
-    <div>
-      <div class="small-circle match" id="matchVal">0</div>
-      <div class="percent" id="matchPct">0%</div>
+            <div className="chart-box">
+              <div style={{fontSize: '0.6rem', marginBottom: '8px'}}>DIGIT FREQUENCY (100 TICKS)</div>
+              <div className="bar-container">
+                {frequencies.map((f, i) => (
+                  <div key={i} style={{textAlign: 'center'}}>
+                    <div className={`bar ${i === hotDigit ? 'active' : ''}`} style={{height: `${f * 3}px`}}></div>
+                    <div style={{fontSize: '0.6rem', marginTop: '4px'}}>{i}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
-
-    <div>
-      <div class="small-circle diff" id="diffVal">0</div>
-      <div class="percent" id="diffPct">0%</div>
-    </div>
-  </div>
-
-</div>
-
-<!-- CHART -->
-<div class="chart">
-  <div class="chart-title">DIGIT FREQUENCY (100 TICKS)</div>
-  <div class="bars" id="bars"></div>
-</div>
-
-</div>
-
-<script>
-// WebSocket
-let ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
-let latestPrice=null;
-
-ws.onopen=()=>subscribe("R_10");
-
-function subscribe(s){
-  ws.send(JSON.stringify({ticks:s,subscribe:1}));
-}
-
-ws.onmessage=e=>{
-  let d=JSON.parse(e.data);
-  if(d.tick){
-    let p=d.tick.quote.toFixed(2);
-    latestPrice=p;
-    price.innerText=p;
-  }
+  );
 };
 
-// Symbols
-["R_10","R_10_1S","R_25","R_25_1S","R_50","R_50_1S","R_75","R_75_1S","R_100","R_100_1S"]
-.forEach(s=>{
-  let o=document.createElement("option");
-  o.value=s;
-  o.text=s;
-  symbol.appendChild(o);
-});
-
-// Analysis
-toggle.onclick=async()=>{
-  let buf=[];
-  digit.innerText="...";
-  await new Promise(r=>{
-    let c=0,i=setInterval(()=>{
-      if(!latestPrice)return;
-      buf.push(parseInt(latestPrice.slice(-1)));
-      if(++c>=100){clearInterval(i);r();}
-    },8);
-  });
-
-  let f=Array(10).fill(0),m=0,d=0;
-  for(let i=0;i<buf.length;i++){
-    f[buf[i]]++;
-    if(i>0){buf[i]==buf[i-1]?m++:d++;}
-  }
-
-  let max=f.indexOf(Math.max(...f));
-  let min=f.indexOf(Math.min(...f));
-  let s=m/(m+d||1);
-
-  if(s>0.6){
-    matchVal.innerText=max;
-    matchPct.innerText="85%";
-    diffVal.innerText="-";
-  }else{
-    diffVal.innerText=min;
-    diffPct.innerText="75%";
-    matchVal.innerText="-";
-  }
-
-  digit.innerText=s>0.6?max:min;
-
-  bars.innerHTML="";
-  let mx=Math.max(...f);
-  f.forEach(v=>{
-    let b=document.createElement("div");
-    b.className="bar";
-    b.style.height=(v/mx)*100+"%";
-    bars.appendChild(b);
-  });
-};
-</script>
-
-</body>
-</html>
+const root = document.getElementById('root');
+if (root) createRoot(root).render(<DollarHeirTerminal />);
+  
