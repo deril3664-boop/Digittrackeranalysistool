@@ -1,250 +1,248 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Digit Tracker Analysis Tool</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DigitFlowPro</title>
 
 <style>
-body {
-  margin:0;
-  background:#000;
-  color:#FF8C00;
-  font-family:Arial;
-  height:100vh;
-  overflow:hidden;
+body{
+    margin:0;
+    background:#000;
+    color:#ff8c00;
+    font-family:Arial;
+    overflow:hidden;
 }
 
-.center {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+/* MATRIX BACKGROUND */
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:0;
 }
 
-.hidden { display:none; }
-
-/* ===== LANDING ===== */
-#landing h1 { font-size:20px; margin-bottom:20px; }
-#status { margin-top:10px; }
-
-button {
-  padding:10px 20px;
-  border:1px solid #FF8C00;
-  background:none;
-  color:#FF8C00;
+/* UI LAYER */
+.app{
+    position:relative;
+    z-index:2;
+    padding:10px;
 }
 
-/* ===== DASHBOARD ===== */
-#dashboard { padding:10px; height:100vh; }
-
-.header {
-  display:flex;
-  justify-content:space-between;
+/* HEADER */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
-.live { color:#00FF00; }
-
-.title { text-align:center; margin:10px; }
-
-.index-box {
-  border:1px solid #FF8C00;
-  border-radius:10px;
-  padding:10px;
-  text-align:center;
+.live{
+    color:#00ff00;
+    font-weight:bold;
 }
 
-.price {
-  font-size:26px;
-  text-shadow:0 0 10px #FF8C00;
+/* TITLE */
+.title{
+    text-align:center;
+    font-size:22px;
+    margin:10px 0;
 }
 
-.main-circle {
-  width:130px;
-  height:130px;
-  border:3px solid #FF8C00;
-  border-radius:50%;
-  margin:10px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:40px;
+/* DROPDOWN */
+select{
+    width:100%;
+    padding:10px;
+    background:#111;
+    border:1px solid #ff8c00;
+    color:#ff8c00;
 }
 
-.row {
-  display:flex;
-  justify-content:space-around;
+/* PRICE */
+.price{
+    text-align:center;
+    font-size:28px;
+    margin:10px 0;
 }
 
-.small-circle {
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  border:2px solid #FF8C00;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* BUTTON */
+.btn{
+    display:block;
+    margin:10px auto;
+    padding:10px 20px;
+    border:1px solid red;
+    background:transparent;
+    color:red;
 }
 
-.red {
-  border-color:red;
-  color:red;
+/* MAIN CIRCLE */
+.circle{
+    width:120px;
+    height:120px;
+    border:4px solid #ff8c00;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:40px;
+    margin:10px auto;
 }
 
-.chart {
-  margin-top:10px;
-  border:1px solid #FF8C00;
-  padding:10px;
+/* MATCH / DIFFER */
+.row{
+    display:flex;
+    justify-content:space-around;
 }
 
-.bars {
-  display:flex;
-  height:100px;
-  align-items:flex-end;
+.small{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    border:2px solid #ff8c00;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
 }
 
-.bar {
-  flex:1;
-  margin:2px;
-  background:#FF8C00;
+/* CHART */
+.chart{
+    display:flex;
+    align-items:flex-end;
+    height:150px;
+    margin-top:20px;
+}
+
+.bar{
+    flex:1;
+    margin:2px;
+    background:#ff8c00;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= LANDING ================= -->
-<div id="landing" class="center">
-  <h1>Digit Tracker Analysis Tool</h1>
-  <button onclick="connect()">Connect WebSocket</button>
-  <div id="status">Not Connected</div>
+<canvas id="matrix"></canvas>
+
+<div class="app">
+
+<div class="header">
+<button onclick="back()">← Back</button>
+<div>DigitFlowPro</div>
+<div class="live" id="live">● LIVE</div>
 </div>
 
-<!-- ================= DASHBOARD ================= -->
-<div id="dashboard" class="hidden">
+<div class="title">Matches / Differs</div>
 
-  <div class="header">
-    <button onclick="goBack()">Back</button>
-    <div>DigitFlowPro</div>
-    <div class="live">● LIVE</div>
-  </div>
+<select id="vol">
+<option>Volatility 10 (1s)</option>
+<option>Volatility 25 (1s)</option>
+<option>Volatility 50 (1s)</option>
+</select>
 
-  <div class="title">Matches / Differs</div>
+<div class="price" id="price">--</div>
 
-  <select id="vol">
-    <option>Volatility 10 (1s)</option>
-  </select>
+<button class="btn" id="toggle">Stop Analysis</button>
 
-  <div class="index-box">
-    Volatility 10 (1s)
-    <div class="price" id="price">0.00</div>
-  </div>
+<div class="circle" id="digit">0</div>
 
-  <button onclick="toggle()" id="toggleBtn">START ANALYSIS</button>
+<div class="row">
+<div>
+<div class="small" id="match">0</div>
+<p>Match</p>
+</div>
 
-  <div class="main-circle" id="digit">0</div>
+<div>
+<div class="small" style="border-color:red;color:red" id="diff">0</div>
+<p>Differs</p>
+</div>
+</div>
 
-  <div class="row">
-    <div>
-      <div class="small-circle" id="match">0</div>
-      <div>MATCH</div>
-    </div>
-
-    <div>
-      <div class="small-circle red" id="diff">0</div>
-      <div>DIFFERS</div>
-    </div>
-  </div>
-
-  <div class="chart">
-    <div>DIGIT FREQUENCY (100 TICKS)</div>
-    <div class="bars" id="bars"></div>
-  </div>
+<div class="chart" id="chart"></div>
 
 </div>
 
 <script>
-let ws;
-let ticks=[];
-let running=false;
+// MATRIX EFFECT
+let c=document.getElementById("matrix");
+let ctx=c.getContext("2d");
+c.height=window.innerHeight;
+c.width=window.innerWidth;
 
-/* CONNECT */
-function connect(){
-  document.getElementById("status").innerText="Connecting...";
+let letters="01";
+let drops=Array(Math.floor(c.width/10)).fill(1);
 
-  ws=new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=131595");
+function draw(){
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,c.width,c.height);
+ctx.fillStyle="#0f0";
 
-  ws.onopen=()=>{
-    document.getElementById("status").innerText="LIVE";
+for(let i=0;i<drops.length;i++){
+let text=letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text,i*10,drops[i]*10);
 
-    // REDIRECT
-    setTimeout(()=>{
-      document.getElementById("landing").classList.add("hidden");
-      document.getElementById("dashboard").classList.remove("hidden");
-    },1000);
+if(drops[i]*10>c.height && Math.random()>0.95) drops[i]=0;
+drops[i]++;
+}
+}
+setInterval(draw,50);
 
-    ws.send(JSON.stringify({ticks:"R_10"}));
-  };
+// SIMULATION LOGIC
+let price=9780;
+let lastDigit=null;
+let match=0;
+let diff=0;
+let counts=Array(10).fill(0);
+let running=true;
 
-  ws.onerror=()=>{
-    document.getElementById("status").innerText="Connection Failed";
-  };
+document.getElementById("toggle").onclick=()=>{
+running=!running;
+document.getElementById("toggle").innerText=running?"Stop Analysis":"Start Analysis";
+};
 
-  ws.onmessage=(msg)=>{
-    let data=JSON.parse(msg.data);
+function tick(){
+if(running){
+price+=Math.random()*2-1;
+let p=price.toFixed(2);
+document.getElementById("price").innerText=p;
 
-    if(data.tick){
-      let price=data.tick.quote;
-      document.getElementById("price").innerText=price;
+let d=parseInt(p.slice(-1));
+document.getElementById("digit").innerText=d;
 
-      let digit=price.toString().slice(-1);
-      document.getElementById("digit").innerText=digit;
+counts[d]++;
 
-      ticks.push(Number(digit));
-      if(ticks.length>100) ticks.shift();
-
-      updateChart();
-    }
-  };
+if(lastDigit!==null){
+if(d===lastDigit) match++;
+else diff++;
 }
 
-/* ANALYSIS */
-function toggle(){
-  running=!running;
-  document.getElementById("toggleBtn").innerText=
-    running?"STOP ANALYSIS":"START ANALYSIS";
+lastDigit=d;
 
-  if(running) analyze();
+document.getElementById("match").innerText=match;
+document.getElementById("diff").innerText=diff;
+
+drawChart();
+}
 }
 
-function analyze(){
-  if(!running) return;
+setInterval(tick,1000);
 
-  document.getElementById("match").innerText=Math.floor(Math.random()*10);
-  document.getElementById("diff").innerText=Math.floor(Math.random()*10);
+function drawChart(){
+let chart=document.getElementById("chart");
+chart.innerHTML="";
 
-  setTimeout(analyze,500);
+let max=Math.max(...counts);
+
+counts.forEach(c=>{
+let bar=document.createElement("div");
+bar.className="bar";
+bar.style.height=(c/max*100)+"%";
+chart.appendChild(bar);
+});
 }
 
-/* CHART */
-function updateChart(){
-  let count=Array(10).fill(0);
-  ticks.forEach(d=>count[d]++);
-
-  let bars=document.getElementById("bars");
-  bars.innerHTML="";
-
-  count.forEach(c=>{
-    let b=document.createElement("div");
-    b.className="bar";
-    b.style.height=(c*2)+"px";
-    bars.appendChild(b);
-  });
-}
-
-/* BACK */
-function goBack(){
-  location.reload();
+function back(){
+alert("Go back to connection page");
 }
 </script>
 
