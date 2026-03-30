@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>DigitFlowPro</title>
 
 <style>
@@ -15,13 +16,13 @@ body{
   overflow:hidden;
 }
 
-/* MAIN LAYOUT */
+/* MAIN */
 #app{
   height:100vh;
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  padding:8px;
+  padding:2vh 3vw;
 }
 
 /* HEADER */
@@ -29,13 +30,14 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  font-size:12px;
+  font-size:2.5vw;
 }
 
 .header button{
   background:none;
   border:none;
   color:#ff8c00;
+  font-size:3vw;
 }
 
 .live{
@@ -43,121 +45,108 @@ body{
   font-weight:bold;
 }
 
-/* TITLE AREA */
+/* TOP */
 .top{
   text-align:center;
 }
 
 .top h3{
-  font-size:14px;
-  margin:2px 0;
+  font-size:3.5vw;
+  margin:0.5vh 0;
 }
 
 select{
   width:100%;
+  padding:1vh;
+  font-size:3vw;
   background:#111;
   border:1px solid #ff8c00;
   color:#ff8c00;
-  padding:5px;
-  margin:4px 0;
 }
 
-/* PRICE */
 .price{
-  font-size:28px;
+  font-size:6vw;
   text-shadow:0 0 8px #ff8c00;
-  margin:2px 0;
 }
 
 /* BUTTON */
 #toggle{
-  font-size:12px;
-  padding:6px 12px;
-  margin:4px auto;
-  display:block;
-  background:transparent;
+  font-size:3vw;
+  padding:1vh 3vw;
+  margin:1vh auto;
   border:1px solid red;
+  background:transparent;
   color:red;
 }
 
-/* CENTER STAGE */
+/* STAGE */
 .stage{
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:flex-start;
 }
 
 /* MAIN CIRCLE */
 .main-circle{
-  width:110px;
-  height:110px;
-  border:3px solid #ff8c00;
+  width:28vw;
+  height:28vw;
+  border:0.8vw solid #ff8c00;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:44px;
-  box-shadow:0 0 12px #ff8c00;
+  font-size:10vw;
+  box-shadow:0 0 2vw #ff8c00;
 }
 
-/* SUB CIRCLES */
+/* SUB */
 .sub{
   display:flex;
   justify-content:space-between;
-  width:80%;
-  margin-top:6px;
+  width:70%;
+  margin-top:1vh;
 }
 
 .small-circle{
-  width:60px;
-  height:60px;
+  width:15vw;
+  height:15vw;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:18px;
+  font-size:4vw;
 }
 
-.match{
-  border:2px solid #ff8c00;
-}
+.match{ border:0.5vw solid #ff8c00; }
+.diff{ border:0.5vw solid red; }
 
-.diff{
-  border:2px solid red;
-}
-
-/* PERCENT */
 .percent{
+  font-size:2.5vw;
   text-align:center;
-  font-size:11px;
 }
 
 /* CHART */
 .chart{
-  height:120px;
+  height:20vh;
   border:1px solid #ff8c00;
-  padding:6px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  padding:1vh;
 }
 
 .chart-title{
-  font-size:10px;
+  font-size:2.5vw;
 }
 
 .bars{
   display:flex;
   align-items:flex-end;
-  height:90px;
+  height:14vh;
 }
 
 .bar{
   width:8%;
   margin:0 1%;
   background:#ff8c00;
-  transition:height .2s ease;
+  transition:height .2s;
 }
 </style>
 </head>
@@ -166,192 +155,121 @@ select{
 
 <div id="app">
 
-  <!-- HEADER -->
-  <div class="header">
-    <button onclick="location.reload()">← Back</button>
-    <div>DigitFlowPro</div>
-    <div class="live">● LIVE</div>
-  </div>
+<!-- HEADER -->
+<div class="header">
+  <button onclick="location.reload()">←</button>
+  <div>DigitFlowPro</div>
+  <div class="live">● LIVE</div>
+</div>
 
-  <!-- TOP -->
-  <div class="top">
-    <h3>Matches / Differs</h3>
-    <select id="symbol"></select>
-    <div id="price" class="price">0.00</div>
-  </div>
+<!-- TOP -->
+<div class="top">
+  <h3>Matches / Differs</h3>
+  <select id="symbol"></select>
+  <div id="price" class="price">0.00</div>
+</div>
 
-  <!-- STAGE -->
-  <div class="stage">
+<!-- STAGE -->
+<div class="stage">
 
-    <button id="toggle">START ANALYSIS</button>
+  <button id="toggle">START</button>
 
-    <div class="main-circle" id="digit">0</div>
+  <div class="main-circle" id="digit">0</div>
 
-    <div class="sub">
-      <div>
-        <div class="small-circle match" id="matchVal">0</div>
-        <div class="percent" id="matchPct">0%</div>
-      </div>
-
-      <div>
-        <div class="small-circle diff" id="diffVal">0</div>
-        <div class="percent" id="diffPct">0%</div>
-      </div>
+  <div class="sub">
+    <div>
+      <div class="small-circle match" id="matchVal">0</div>
+      <div class="percent" id="matchPct">0%</div>
     </div>
 
-  </div>
-
-  <!-- CHART -->
-  <div class="chart">
-    <div class="chart-title">DIGIT FREQUENCY (100 TICKS)</div>
-    <div class="bars" id="bars"></div>
+    <div>
+      <div class="small-circle diff" id="diffVal">0</div>
+      <div class="percent" id="diffPct">0%</div>
+    </div>
   </div>
 
 </div>
 
+<!-- CHART -->
+<div class="chart">
+  <div class="chart-title">DIGIT FREQUENCY (100 TICKS)</div>
+  <div class="bars" id="bars"></div>
+</div>
+
+</div>
+
 <script>
-
-// =====================
-// WEBSOCKET
-// =====================
-let ws;
+// WebSocket
+let ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
 let latestPrice=null;
-let symbol="R_10";
 
-ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=131595");
+ws.onopen=()=>subscribe("R_10");
 
-ws.onopen = ()=>{
-  subscribe(symbol);
-};
-
-function subscribe(sym){
-  ws.send(JSON.stringify({ticks:sym,subscribe:1}));
+function subscribe(s){
+  ws.send(JSON.stringify({ticks:s,subscribe:1}));
 }
 
-ws.onmessage = (msg)=>{
-  let data = JSON.parse(msg.data);
-  if(data.tick){
-    let p = data.tick.quote.toFixed(2);
-    latestPrice = p;
-    document.getElementById("price").innerText = p;
+ws.onmessage=e=>{
+  let d=JSON.parse(e.data);
+  if(d.tick){
+    let p=d.tick.quote.toFixed(2);
+    latestPrice=p;
+    price.innerText=p;
   }
 };
 
-// =====================
-// SYMBOLS
-// =====================
-let list=["R_10","R_10_1S","R_25","R_25_1S","R_50","R_50_1S","R_75","R_75_1S","R_100","R_100_1S"];
-
-list.forEach(s=>{
+// Symbols
+["R_10","R_10_1S","R_25","R_25_1S","R_50","R_50_1S","R_75","R_75_1S","R_100","R_100_1S"]
+.forEach(s=>{
   let o=document.createElement("option");
   o.value=s;
   o.text=s;
-  symbolEl.appendChild(o);
+  symbol.appendChild(o);
 });
 
-// =====================
-// ANALYSIS
-// =====================
-let buffer=[];
-
-toggle.onclick = async ()=>{
-  buffer=[];
+// Analysis
+toggle.onclick=async()=>{
+  let buf=[];
   digit.innerText="...";
-
-  await collect(100);
-
-  let r = analyze(buffer);
-
-  show(r);
-  chart(buffer);
-};
-
-// =====================
-// FAST BUFFER
-// =====================
-function collect(n){
-  return new Promise(res=>{
-    let c=0;
-    let i=setInterval(()=>{
+  await new Promise(r=>{
+    let c=0,i=setInterval(()=>{
       if(!latestPrice)return;
-
-      buffer.push(parseInt(latestPrice.slice(-1)));
-      c++;
-
-      if(c>=n){
-        clearInterval(i);
-        res();
-      }
+      buf.push(parseInt(latestPrice.slice(-1)));
+      if(++c>=100){clearInterval(i);r();}
     },8);
   });
-}
 
-// =====================
-// STRATEGY
-// =====================
-function analyze(d){
-
-  let f=Array(10).fill(0);
-  let m=0,df=0;
-
-  for(let i=0;i<d.length;i++){
-    f[d[i]]++;
-    if(i>0){
-      d[i]==d[i-1]?m++:df++;
-    }
+  let f=Array(10).fill(0),m=0,d=0;
+  for(let i=0;i<buf.length;i++){
+    f[buf[i]]++;
+    if(i>0){buf[i]==buf[i-1]?m++:d++;}
   }
 
   let max=f.indexOf(Math.max(...f));
   let min=f.indexOf(Math.min(...f));
-
-  let s=m/(m+df||1);
+  let s=m/(m+d||1);
 
   if(s>0.6){
-    return {signal:"MATCH",digit:max,confidence:85};
-  }else{
-    return {signal:"DIFFERS",digit:min,confidence:75};
-  }
-}
-
-// =====================
-// DISPLAY
-// =====================
-function show(r){
-
-  digit.innerText=r.digit;
-
-  if(r.signal==="MATCH"){
-    matchVal.innerText=r.digit;
-    matchPct.innerText=r.confidence+"%";
+    matchVal.innerText=max;
+    matchPct.innerText="85%";
     diffVal.innerText="-";
-    diffPct.innerText="0%";
   }else{
-    diffVal.innerText=r.digit;
-    diffPct.innerText=r.confidence+"%";
+    diffVal.innerText=min;
+    diffPct.innerText="75%";
     matchVal.innerText="-";
-    matchPct.innerText="0%";
   }
-}
 
-// =====================
-// CHART
-// =====================
-function chart(d){
+  digit.innerText=s>0.6?max:min;
 
   bars.innerHTML="";
-  let f=Array(10).fill(0);
-  d.forEach(x=>f[x]++);
-
-  let max=Math.max(...f);
-
+  let mx=Math.max(...f);
   f.forEach(v=>{
     let b=document.createElement("div");
     b.className="bar";
-    b.style.height=(v/max)*100+"%";
+    b.style.height=(v/mx)*100+"%";
     bars.appendChild(b);
   });
-}
-
+};
 </script>
 
 </body>
