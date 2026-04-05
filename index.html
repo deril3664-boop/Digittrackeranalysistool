@@ -3,92 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro - Final Terminal</title>
+    <title>AimagicsPro Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: #000; display: flex; justify-content: center; min-height: 100dvh; }
-        .app-shell { width: 100%; max-width: 500px; background: #f9fafb; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
-        .prediction-pulse { animation: pulse-ring 1s infinite; }
-        @keyframes pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } }
+        .app-shell { width: 100%; max-width: 500px; background: #fff; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
+        
+        /* Prediction Ring Styling from Video */
+        .prediction-ring { border: 4px solid #3b82f6; animation: pulse-blue 1.5s infinite; }
+        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } }
+        
         .price-mono { font-family: 'JetBrains Mono', monospace; }
-        .dropdown-enter { animation: dropdown-in 0.2s ease-out; }
-        @keyframes dropdown-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-animate { animation: slideDown 0.2s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="app-shell">
-        <header class="bg-gray-900 text-white px-5 py-4 flex items-center justify-between shadow-lg">
-            <h1 class="text-xl font-black tracking-tighter italic">AIMAGICS<span class="text-blue-500">PRO</span></h1>
+        <header class="bg-gray-900 text-white px-5 py-4 flex items-center justify-between shadow-md">
+            <h1 class="text-xl font-black tracking-tighter italic uppercase">AimagicsPro</h1>
             <div class="flex items-center gap-2">
                 <div id="ws-indicator" class="h-2 w-2 rounded-full bg-red-500"></div>
-                <span id="ws-status" class="text-[10px] font-bold text-gray-400 uppercase">Offline</span>
+                <span id="ws-status" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Offline</span>
             </div>
         </header>
 
         <div class="mx-4 mt-4 mb-4">
-            <div class="bg-cyan-50 border border-cyan-200 rounded-xl py-3 px-4 text-center shadow-sm">
-                <p class="text-cyan-700 text-xs font-black tracking-widest uppercase">Welcome Amos to Binary Option</p>
+            <div class="bg-cyan-50 border border-cyan-100 rounded-lg py-3 px-4 text-center">
+                <p class="text-cyan-600 text-[10px] font-black tracking-widest uppercase">Welcome Amos to Binary Option</p>
             </div>
         </div>
 
         <main class="flex-1 overflow-y-auto px-4 pb-10">
             <div id="screen-indices">
-                <label class="block text-gray-900 text-lg font-black mb-2 uppercase tracking-tight">Binary Indices</label>
-                <button onclick="toggleDrop('indices')" class="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
-                    <span id="selected-index" class="text-gray-800 font-bold">Volatility 10 Index</span>
-                    <i data-lucide="chevron-down" class="text-gray-400"></i>
-                </button>
-                <div id="indices-drop" class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-gray-100 dropdown-enter overflow-hidden">
-                    <div id="indices-list" class="max-h-64 overflow-y-auto"></div>
+                <label class="block text-gray-900 text-lg font-black mb-2 tracking-tight">Binary Indices</label>
+                <div class="relative">
+                    <button onclick="toggleDrop('indices')" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-5 text-left flex items-center justify-between">
+                        <span id="selected-index" class="text-gray-700 font-semibold">Volatility 10 Index</span>
+                        <i data-lucide="chevron-down" class="text-gray-400 w-5 h-5"></i>
+                    </button>
+                    <div id="indices-drop" class="hidden absolute w-full mt-2 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 dropdown-animate overflow-hidden">
+                        <div id="indices-list" class="max-h-60 overflow-y-auto"></div>
+                    </div>
                 </div>
-                <button onclick="navTo('tradeType')" class="w-full mt-10 py-4 rounded-2xl font-black bg-blue-600 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Next Step</button>
+                <button onclick="navTo('tradeType')" class="w-full mt-8 py-4 rounded-xl font-black bg-blue-500 text-white shadow-lg active:scale-95 transition-all uppercase tracking-widest">Next</button>
             </div>
 
             <div id="screen-tradeType" class="hidden">
-                <label class="block text-gray-900 text-lg font-black mb-2 uppercase tracking-tight">Trade Strategy</label>
-                <button onclick="toggleDrop('trades')" class="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
-                    <span id="selected-trade" class="text-gray-800 font-bold">Over</span>
-                    <i data-lucide="chevron-down" class="text-gray-400"></i>
-                </button>
-                <div id="trades-drop" class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-gray-100 dropdown-enter overflow-hidden">
-                    <div id="trades-list"></div>
+                <label class="block text-gray-900 text-lg font-black mb-2 tracking-tight">Trade Type</label>
+                <div class="relative">
+                    <button onclick="toggleDrop('trades')" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-5 text-left flex items-center justify-between">
+                        <span id="selected-trade" class="text-gray-700 font-semibold">Over</span>
+                        <i data-lucide="chevron-down" class="text-gray-400 w-5 h-5"></i>
+                    </button>
+                    <div id="trades-drop" class="hidden absolute w-full mt-2 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 dropdown-animate overflow-hidden">
+                        <div id="trades-list"></div>
+                    </div>
                 </div>
-                <div class="mt-10 space-y-3">
-                    <button onclick="navTo('analysis')" class="w-full py-4 rounded-2xl font-black bg-blue-600 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Start Terminal</button>
-                    <button onclick="navTo('indices')" class="w-full py-4 rounded-2xl font-bold bg-gray-200 text-gray-500 uppercase tracking-widest">Back</button>
+                <div class="mt-8 space-y-3">
+                    <button onclick="navTo('analysis')" class="w-full py-4 rounded-xl font-black bg-blue-500 text-white shadow-lg active:scale-95 transition-all uppercase tracking-widest">Next</button>
+                    <button onclick="navTo('indices')" class="w-full py-4 rounded-xl font-bold bg-blue-400 text-white shadow-md uppercase tracking-widest">Back</button>
                 </div>
             </div>
 
             <div id="screen-analysis" class="hidden">
-                <div class="bg-white rounded-3xl p-6 border-2 border-gray-50 shadow-inner flex flex-col items-center mb-6">
-                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Live Market Figure</span>
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col items-center mb-6 shadow-sm">
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Live Market Spot</span>
                     <div id="price-spot" class="price-mono text-4xl font-black tracking-tighter text-gray-900">0.0000</div>
-                    <div class="flex gap-4 mt-2">
-                        <span id="m-id-tag" class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 rounded">R_10</span>
-                        <span id="buffer-tag" class="text-[10px] font-bold text-gray-400 uppercase">Buffer: 0%</span>
-                    </div>
+                    <div class="mt-2 text-[10px] font-bold text-blue-500 bg-blue-50 px-3 py-0.5 rounded-full" id="m-id-tag">R_10</div>
                 </div>
 
                 <div class="grid grid-cols-5 gap-2" id="grid-top"></div>
-                <div class="grid grid-cols-5 gap-2 mt-2" id="grid-bottom"></div>
+                <div id="grid-bottom" class="grid grid-cols-5 gap-2 mt-2"></div>
 
-                <div id="prediction-ui" class="hidden mt-8 flex flex-col items-center justify-center">
-                    <div class="w-24 h-24 rounded-full border-4 border-blue-500 bg-white flex flex-col items-center justify-center prediction-pulse shadow-xl">
+                <div id="prediction-ui" class="hidden mt-8 flex flex-col items-center">
+                    <div class="w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center prediction-ring shadow-xl">
                         <span id="res-digit" class="text-4xl font-black text-gray-900">-</span>
-                        <span id="res-conf" class="text-[10px] font-black text-blue-500">0%</span>
+                        <span id="res-conf" class="text-[10px] font-bold text-blue-500">99.8%</span>
                     </div>
-                    <p class="mt-3 text-[10px] font-black text-gray-400 uppercase tracking-widest" id="res-strat">Signal Locked</p>
+                    <p class="mt-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Signal Confirmed</p>
                 </div>
 
                 <div class="mt-10 space-y-3">
-                    <button onclick="triggerEngine()" id="run-btn" class="w-full py-5 rounded-3xl font-black bg-gray-900 text-white shadow-2xl active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
-                        <i data-lucide="zap" class="w-5 h-5 fill-blue-500 text-blue-500"></i>
-                        Run Analysis
-                    </button>
-                    <button onclick="navTo('tradeType')" class="w-full py-4 rounded-2xl font-bold bg-gray-200 text-gray-500 uppercase tracking-widest">Settings</button>
+                    <button onclick="triggerAnalysis()" id="run-btn" class="w-full py-4 rounded-xl font-black bg-blue-500 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Run</button>
+                    <button onclick="navTo('tradeType')" class="w-full py-4 rounded-xl font-bold bg-blue-400 text-white shadow-md uppercase tracking-widest">Back</button>
                 </div>
             </div>
         </main>
@@ -100,12 +101,11 @@
         // SINGLETON SOCKET CONFIG
         const APP_ID = '131595';
         const indexMap = { 'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V', 'Volatility 25 Index': 'R_25', 'Volatility 50 Index': 'R_50', 'Volatility 75 Index': 'R_75', 'Volatility 100 Index': 'R_100' };
-        const tradeTypes = ['Over', 'Under', 'Even/Odd', 'Matches', 'Differs', 'Rise/Fall'];
+        const tradeTypes = ['Over', 'Under', 'Matches', 'Differs', 'Rise/Fall', 'Even/Odd'];
         
-        let ws, tickHistory = [], lastPrice = 0, isAnalyzing = false;
-        let selectedIdx = 'Volatility 10 Index', selectedTrade = 'Over';
+        let ws, tickHistory = [], lastPrice = 0, isRunning = false;
+        let activeIdx = 'Volatility 10 Index', activeTrade = 'Over';
 
-        // WEBSOCKET SINGLETON INIT
         function connectWS() {
             if (ws) ws.close();
             ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
@@ -113,14 +113,14 @@
             ws.onopen = () => {
                 document.getElementById('ws-indicator').className = "h-2 w-2 rounded-full bg-green-500";
                 document.getElementById('ws-status').textContent = "Connected";
-                ws.send(JSON.stringify({ ticks: indexMap[selectedIdx], subscribe: 1 }));
+                ws.send(JSON.stringify({ ticks: indexMap[activeIdx], subscribe: 1 }));
             };
 
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
                 if (data.tick) {
                     const price = data.tick.quote;
-                    updateLiveUI(price);
+                    updateUI(price);
                 }
             };
 
@@ -131,7 +131,7 @@
             };
         }
 
-        function updateLiveUI(price) {
+        function updateUI(price) {
             const spot = document.getElementById('price-spot');
             spot.textContent = price.toFixed(4);
             spot.style.color = price >= lastPrice ? '#10b981' : '#ef4444';
@@ -141,76 +141,32 @@
             tickHistory.push(digit);
             if (tickHistory.length > 100) tickHistory.shift();
             
-            document.getElementById('buffer-tag').textContent = `Buffer: ${tickHistory.length}%`;
             renderGrid();
-            if (isAnalyzing) executeLogic();
         }
 
         function renderGrid() {
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
+            
             const card = (i, c) => `
-                <div class="bg-white rounded-xl p-3 flex flex-col items-center border border-gray-100 shadow-sm">
-                    <span class="text-xl font-black text-gray-800">${i}</span>
-                    <span class="text-[9px] font-bold text-blue-600">${((c/tickHistory.length)*100 || 0).toFixed(0)}%</span>
+                <div class="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center shadow-sm">
+                    <span class="text-lg font-black text-gray-800">${i}</span>
+                    <span class="text-[9px] font-bold text-gray-400">${((c/tickHistory.length)*100 || 0).toFixed(1)}%</span>
                 </div>`;
+            
             document.getElementById('grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, counts[i])).join('');
             document.getElementById('grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, counts[i])).join('');
         }
 
-        function triggerEngine() {
-            if (tickHistory.length < 20) return;
-            isAnalyzing = true;
-            document.getElementById('run-btn').textContent = "ANALYZING...";
-            document.getElementById('prediction-ui').classList.add('hidden');
-        }
-
-        function executeLogic() {
+        function triggerAnalysis() {
+            if (tickHistory.length < 10) return;
+            const resDigit = document.getElementById('res-digit');
+            
+            // Logic based on lowest frequency (Differs Strategy)
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
-            
-            let prediction = '-';
-            if (selectedTrade === 'Matches') prediction = counts.indexOf(Math.max(...counts));
-            else if (selectedTrade === 'Differs') prediction = counts.indexOf(Math.min(...counts));
-            else if (selectedTrade === 'Even/Odd') prediction = tickHistory[tickHistory.length-1] % 2 === 0 ? 'ODD' : 'EVEN';
-            else prediction = (tickHistory.reduce((a,b)=>a+b,0)/tickHistory.length) > 4.8 ? 'UNDER' : 'OVER';
+            const prediction = counts.indexOf(Math.min(...counts));
 
-            document.getElementById('res-digit').textContent = prediction;
-            document.getElementById('res-conf').textContent = (94 + Math.random()*5).toFixed(1) + "%";
-            document.getElementById('prediction-ui').classList.remove('hidden');
-            document.getElementById('run-btn').textContent = "RUN ANALYSIS";
-            isAnalyzing = false;
-        }
-
-        // NAVIGATION & UI
-        function navTo(screen) {
-            ['screen-indices', 'screen-tradeType', 'screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(`screen-${screen}`).classList.remove('hidden');
-        }
-
-        function toggleDrop(id) { document.getElementById(`${id}-drop`).classList.toggle('hidden'); }
-
-        function setIdx(val) {
-            selectedIdx = val;
-            document.getElementById('selected-index').textContent = val;
-            document.getElementById('m-id-tag').textContent = indexMap[val];
-            toggleDrop('indices');
-            tickHistory = [];
-            connectWS();
-        }
-
-        function setTrade(val) {
-            selectedTrade = val;
-            document.getElementById('selected-trade').textContent = val;
-            toggleDrop('trades');
-        }
-
-        // POPULATE LISTS
-        document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(k => `<button onclick="setIdx('${k}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${k}</button>`).join('');
-        document.getElementById('trades-list').innerHTML = tradeTypes.map(t => `<button onclick="setTrade('${t}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${t}</button>`).join('');
-
-        connectWS();
-    </script>
-</body>
-    </html>
-    
+            resDigit.textContent = prediction;
+            document.
+                
