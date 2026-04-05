@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AimagicsPro - Live Terminal</title>
+    <title>AimagicsPro - Binary Options</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -19,7 +19,7 @@
             min-height: 100vh;
         }
 
-        /* Responsive Scaling for Mac/Laptop/Phone */
+        /* Responsive Scaling for Desktop and Mobile */
         .app-shell {
             width: 100%;
             max-width: 400px;
@@ -60,7 +60,6 @@
         <header class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-4 py-4 flex items-center justify-between shadow-md">
             <h1 class="text-lg font-semibold tracking-wide">AimagicsPro</h1>
             <div class="flex items-center gap-2">
-                <span id="connection-status" class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/50">Offline</span>
                 <span class="text-xs text-gray-400 font-medium">CapCut</span>
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
@@ -128,32 +127,21 @@
     <script>
         lucide.createIcons();
 
-        // --- WEBSOCKET & ENGINE LOGIC ---
-        const APP_ID = '131595';
+        // --- SILENT WEBSOCKET LOGIC ---
+        const A_I = '131595'; // Hidden App ID
         let ws;
         let tickHistory = [];
         const indexMap = {
-            'Volatility 10 Index': 'R_10',
-            'Volatility 10 (1s) Index': '1HZ10V',
-            'Volatility 25 Index': 'R_25',
-            'Volatility 25 (1s) Index': '1HZ25V',
-            'Volatility 50 Index': 'R_50',
-            'Volatility 50 (1s) Index': '1HZ50V',
-            'Volatility 75 Index': 'R_75',
-            'Volatility 75 (1s) Index': '1HZ75V',
-            'Volatility 100 Index': 'R_100',
-            'Volatility 100 (1s) Index': '1HZ100V'
+            'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V',
+            'Volatility 25 Index': 'R_25', 'Volatility 25 (1s) Index': '1HZ25V',
+            'Volatility 50 Index': 'R_50', 'Volatility 50 (1s) Index': '1HZ50V',
+            'Volatility 75 Index': 'R_75', 'Volatility 75 (1s) Index': '1HZ75V',
+            'Volatility 100 Index': 'R_100', 'Volatility 100 (1s) Index': '1HZ100V'
         };
 
         function connectWS() {
-            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
-            
-            ws.onopen = () => {
-                document.getElementById('connection-status').textContent = 'Live Connection';
-                document.getElementById('connection-status').className = 'text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/50';
-                subscribeToTicks();
-            };
-
+            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${A_I}`);
+            ws.onopen = () => subscribeToTicks();
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
                 if (data.tick) {
@@ -161,12 +149,11 @@
                     updateGrid(lastDigit);
                 }
             };
-
             ws.onclose = () => setTimeout(connectWS, 3000);
         }
 
         function subscribeToTicks() {
-            if (ws.readyState === WebSocket.OPEN) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 const symbol = indexMap[selectedIndex] || 'R_10';
                 ws.send(JSON.stringify({ forget_all: "ticks" }));
                 ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
@@ -188,7 +175,7 @@
         }
 
         function requestSignal() {
-            if (tickHistory.length < 10) return;
+            if (tickHistory.length < 5) return;
             
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
@@ -203,7 +190,7 @@
                     (probs.filter((_,i)=>i%2===0).reduce((a,b)=>a+b,0) > 50 ? "EVEN" : "ODD") : 
                     (tickHistory[tickHistory.length-1] > tickHistory[tickHistory.length-2] ? "RISE" : "FALL");
                 recEl.textContent = signal;
-                recEl.className = "font-black text-blue-700 text-xl";
+                recEl.className = "font-black text-blue-700 text-xl uppercase";
             } else {
                 recEl.textContent = tickHistory[tickHistory.length-1];
                 recEl.className = "font-black text-blue-700 text-5xl";
@@ -224,20 +211,5 @@
         }
 
         function setIdx(v) { selectedIndex = v; document.getElementById('selected-index').textContent = v; toggleDropdown('indices'); if(ws) subscribeToTicks(); }
-        function setTrade(v) { selectedTradeType = v; document.getElementById('selected-trade').textContent = v; toggleDropdown('tradeType'); }
-        function toggleDropdown(id) { document.getElementById(`${id}-dropdown`).classList.toggle('hidden'); }
+        function set
         
-        function toggleScreen(id) {
-            ['screen-indices','screen-tradeType','screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function goToTradeType() { toggleScreen('screen-tradeType'); }
-        function goToIndices() { toggleScreen('screen-indices'); }
-        function goToAnalysis() { toggleScreen('screen-analysis'); }
-
-        populate();
-        connectWS();
-    </script>
-</body>
-</html>
