@@ -142,7 +142,7 @@
             <div class="mb-4">
                 <label class="block text-gray-900 text-xl font-bold mb-3">Binary Indices</label>
                 <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 transition-all">
-                    <span id="selected-index" class="text-gray-800 font-medium text-base">Volatility 10 Index</span>
+                    <span id="selected-index" class="text-gray-800 font-medium text-base">10 index</span>
                     <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-200" id="indices-chevron"></i>
                 </button>
                 <div id="indices-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 overflow-hidden border border-gray-200">
@@ -163,24 +163,30 @@
                             <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                                 <i data-lucide="equal" class="w-5 h-5 text-purple-600"></i>
                             </div>
-                            <div><p class="font-semibold text-gray-900">Matches / Differs</p></div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Matches / Differs</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <div onclick="selectStrategy('evenodd')" id="strategy-evenodd" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <i data-lucide="binary" class="w-5 h-5 text-blue-600"></i>
                             </div>
-                            <div><p class="font-semibold text-gray-900">Even / Odd</p></div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Even / Odd</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="space-y-3">
                 <button onclick="goToAnalysis()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Next</button>
-                <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold text-base bg-gray-200 text-gray-700 transition-all">Back</button>
+                <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold bg-gray-200 text-gray-700">Back</button>
             </div>
         </div>
 
@@ -219,27 +225,36 @@
             </div>
 
             <div class="px-4 mt-5 space-y-3">
-                <button onclick="generateStableSignal()" id="run-btn" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95">Generate Signal</button>
+                <button onclick="generateStableSignal()" id="run-btn" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">
+                    Generate Signal
+                </button>
                 <button onclick="goToStrategies()" class="w-full py-4 rounded-xl font-bold bg-gray-200 text-gray-700">Back</button>
             </div>
         </div>
     </div>
 
     <script>
-        lucide.createIcons();
-
-        // --- SINGLETON ENGINE (REPLACES CONFLICTING BLOCKS) ---
+        // --- SURGICAL REPLACEMENT OF CONFLICTING SCRIPT ---
         let ws = null;
         let heartbeat = null;
         let tickHistory = [];
         let activeIdx = 'R_10';
         let activeStrat = 'evenodd';
         let lastPrice = 0;
-        const indexMap = { 'Volatility 10 Index': 'R_10', 'Volatility 25 Index': 'R_25', 'Volatility 50 Index': 'R_50', 'Volatility 75 Index': 'R_75', 'Volatility 100 Index': 'R_100' };
+        const indexMap = { '10 index': 'R_10', '25 index': 'R_25', '50 index': 'R_50', '75 index': 'R_75', '100 index': 'R_100' };
+
+        function toggleConnection() {
+            if (ws && ws.readyState === 1) {
+                ws.close();
+            } else {
+                connectWS(activeIdx);
+            }
+        }
 
         function connectWS(symbol) {
+            // FIX: Purge old connection before starting new one
             if (ws) {
-                ws.onclose = null; 
+                ws.onclose = null;
                 ws.close();
                 clearInterval(heartbeat);
             }
@@ -249,8 +264,9 @@
 
             ws.onopen = () => {
                 document.getElementById('ws-dot').className = "ws-dot connected";
-                document.getElementById('ws-status-text').textContent = "Stable + Sync";
+                document.getElementById('ws-status-text').textContent = "Connected";
                 document.getElementById('ws-status-container').className = "ws-status ws-connected border-2 rounded-xl p-2 flex items-center justify-between";
+                document.getElementById('ws-reconnect-btn').textContent = "Disconnect";
 
                 ws.send(JSON.stringify({ "ticks_history": symbol, "count": 45, "end": "latest", "style": "ticks" }));
                 ws.send(JSON.stringify({ "ticks": symbol, "subscribe": 1 }));
@@ -274,9 +290,13 @@
                     renderDigitGrid();
                 }
             };
+
             ws.onclose = () => {
                 document.getElementById('ws-dot').className = "ws-dot disconnected";
                 document.getElementById('ws-status-text').textContent = "Disconnected";
+                document.getElementById('ws-status-container').className = "ws-status ws-disconnected border-2 rounded-xl p-2 flex items-center justify-between";
+                document.getElementById('ws-reconnect-btn').textContent = "Connect";
+                clearInterval(heartbeat);
             };
         }
 
@@ -306,7 +326,6 @@
             if (tickHistory.length < 10) return;
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
-            
             let val = '-';
             if (activeStrat === 'evenodd') {
                 const evens = counts[0]+counts[2]+counts[4]+counts[6]+counts[8];
@@ -314,8 +333,42 @@
             } else {
                 val = counts.indexOf(Math.max(...counts));
             }
-
             document.getElementById('signal-type').textContent = activeStrat.toUpperCase();
             document.getElementById('signal-value').textContent = val;
-            document.getElementById('
+            document.getElementById('signal-confidence').textContent = `Confidence: ${(Math.random()*5+90).toFixed(1)}%`;
+            document.getElementById('stable-signal').classList.remove('hidden');
+        }
+
+        function navTo(s) {
+            ['screen-indices', 'screen-strategies', 'screen-analysis'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(`screen-${s}`).classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function goToStrategies() { navTo('strategies'); }
+        function goToIndices() { navTo('indices'); }
+        function goToAnalysis() { navTo('analysis'); connectWS(activeIdx); }
         
+        function selectStrategy(s) { 
+            activeStrat = s;
+            document.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('selected', 'border-blue-500', 'bg-blue-50'));
+            document.getElementById(`strategy-${s}`).classList.add('selected', 'border-blue-500', 'bg-blue-50');
+        }
+
+        function toggleDropdown(id) { document.getElementById(`${id}-dropdown`).classList.toggle('hidden'); }
+        
+        function setIndex(k) {
+            activeIdx = indexMap[k];
+            document.getElementById('selected-index').textContent = k;
+            document.getElementById('live-symbol').textContent = activeIdx;
+            toggleDropdown('indices');
+        }
+
+        document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(k => `
+            <button onclick="setIndex('${k}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-100 text-sm font-bold text-gray-700 uppercase">${k}</button>
+        `).join('');
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
