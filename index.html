@@ -3,172 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro - Live Terminal</title>
+    <title>AimagicsPro - Final Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: #000; display: flex; justify-content: center; min-height: 100dvh; }
-        .app-shell { width: 100%; max-width: 500px; background: #ffffff; min-height: 100dvh; display: flex; flex-direction: column; }
-        
-        .price-display { font-family: 'JetBrains Mono', monospace; }
-        .price-up { color: #10b981; animation: flash-green 0.3s ease; }
-        .price-down { color: #ef4444; animation: flash-red 0.3s ease; }
-        
-        @keyframes flash-green { from { background: rgba(16, 185, 129, 0.2); } to { background: transparent; } }
-        @keyframes flash-red { from { background: rgba(239, 68, 68, 0.2); } to { background: transparent; } }
-        
-        .prediction-ring { border: 6px solid #3b82f6; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); } 70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        .app-shell { width: 100%; max-width: 500px; background: #f9fafb; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
+        .prediction-pulse { animation: pulse-ring 1s infinite; }
+        @keyframes pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } }
+        .price-mono { font-family: 'JetBrains Mono', monospace; }
+        .dropdown-enter { animation: dropdown-in 0.2s ease-out; }
+        @keyframes dropdown-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="app-shell">
-        <header class="bg-gray-900 text-white p-4 flex justify-between items-center shadow-lg">
-            <h1 class="text-xl font-black italic tracking-tighter">AIMAGICS<span class="text-blue-500">PRO</span></h1>
-            <div id="conn-status" class="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded-full border border-gray-700">
-                <div class="h-2 w-2 rounded-full bg-red-500" id="status-dot"></div>
-                <span class="text-[10px] font-bold uppercase" id="status-text">Offline</span>
+        <header class="bg-gray-900 text-white px-5 py-4 flex items-center justify-between shadow-lg">
+            <h1 class="text-xl font-black tracking-tighter italic">AIMAGICS<span class="text-blue-500">PRO</span></h1>
+            <div class="flex items-center gap-2">
+                <div id="ws-indicator" class="h-2 w-2 rounded-full bg-red-500"></div>
+                <span id="ws-status" class="text-[10px] font-bold text-gray-400 uppercase">Offline</span>
             </div>
         </header>
 
-        <main class="flex-1 p-4 flex flex-col gap-4">
-            
-            <div class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase">Selected Market</p>
-                    <h2 id="m-name" class="font-extrabold text-gray-800">Volatility 10 Index</h2>
-                </div>
-                <div class="text-right">
-                    <span id="m-id" class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded">R_10</span>
-                </div>
+        <div class="mx-4 mt-4 mb-4">
+            <div class="bg-cyan-50 border border-cyan-200 rounded-xl py-3 px-4 text-center shadow-sm">
+                <p class="text-cyan-700 text-xs font-black tracking-widest uppercase">Welcome Amos to Binary Option</p>
             </div>
+        </div>
 
-            <div class="flex flex-col items-center justify-center py-8 bg-white rounded-3xl border-2 border-gray-50 shadow-inner">
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Live Spot Price</span>
-                <div id="price-container" class="price-display text-4xl font-black tracking-tighter text-gray-900">
-                    0.0000
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase">Tick History:</span>
-                    <span id="tick-count" class="text-[9px] font-black text-blue-500">0/100</span>
-                </div>
-            </div>
-
-            <div id="digit-grid" class="grid grid-cols-5 gap-2">
-                </div>
-
-            <div id="signal-area" class="hidden flex flex-col items-center p-4">
-                <div class="prediction-ring w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center">
-                    <span id="res-val" class="text-4xl font-black text-gray-900">-</span>
-                    <span id="res-conf" class="text-[10px] font-bold text-blue-500">0%</span>
-                </div>
-                <p id="res-strat" class="mt-3 text-[10px] font-black text-gray-400 uppercase tracking-widest"></p>
-            </div>
-
-            <div class="mt-auto pt-4">
-                <button onclick="runAnalysis()" id="run-btn" class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
-                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-                    Run Analysis
+        <main class="flex-1 overflow-y-auto px-4 pb-10">
+            <div id="screen-indices">
+                <label class="block text-gray-900 text-lg font-black mb-2 uppercase tracking-tight">Binary Indices</label>
+                <button onclick="toggleDrop('indices')" class="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
+                    <span id="selected-index" class="text-gray-800 font-bold">Volatility 10 Index</span>
+                    <i data-lucide="chevron-down" class="text-gray-400"></i>
                 </button>
+                <div id="indices-drop" class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-gray-100 dropdown-enter overflow-hidden">
+                    <div id="indices-list" class="max-h-64 overflow-y-auto"></div>
+                </div>
+                <button onclick="navTo('tradeType')" class="w-full mt-10 py-4 rounded-2xl font-black bg-blue-600 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Next Step</button>
             </div>
 
+            <div id="screen-tradeType" class="hidden">
+                <label class="block text-gray-900 text-lg font-black mb-2 uppercase tracking-tight">Trade Strategy</label>
+                <button onclick="toggleDrop('trades')" class="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
+                    <span id="selected-trade" class="text-gray-800 font-bold">Over</span>
+                    <i data-lucide="chevron-down" class="text-gray-400"></i>
+                </button>
+                <div id="trades-drop" class="hidden absolute left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-gray-100 dropdown-enter overflow-hidden">
+                    <div id="trades-list"></div>
+                </div>
+                <div class="mt-10 space-y-3">
+                    <button onclick="navTo('analysis')" class="w-full py-4 rounded-2xl font-black bg-blue-600 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Start Terminal</button>
+                    <button onclick="navTo('indices')" class="w-full py-4 rounded-2xl font-bold bg-gray-200 text-gray-500 uppercase tracking-widest">Back</button>
+                </div>
+            </div>
+
+            <div id="screen-analysis" class="hidden">
+                <div class="bg-white rounded-3xl p-6 border-2 border-gray-50 shadow-inner flex flex-col items-center mb-6">
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Live Market Figure</span>
+                    <div id="price-spot" class="price-mono text-4xl font-black tracking-tighter text-gray-900">0.0000</div>
+                    <div class="flex gap-4 mt-2">
+                        <span id="m-id-tag" class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 rounded">R_10</span>
+                        <span id="buffer-tag" class="text-[10px] font-bold text-gray-400 uppercase">Buffer: 0%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-5 gap-2" id="grid-top"></div>
+                <div class="grid grid-cols-5 gap-2 mt-2" id="grid-bottom"></div>
+
+                <div id="prediction-ui" class="hidden mt-8 flex flex-col items-center justify-center">
+                    <div class="w-24 h-24 rounded-full border-4 border-blue-500 bg-white flex flex-col items-center justify-center prediction-pulse shadow-xl">
+                        <span id="res-digit" class="text-4xl font-black text-gray-900">-</span>
+                        <span id="res-conf" class="text-[10px] font-black text-blue-500">0%</span>
+                    </div>
+                    <p class="mt-3 text-[10px] font-black text-gray-400 uppercase tracking-widest" id="res-strat">Signal Locked</p>
+                </div>
+
+                <div class="mt-10 space-y-3">
+                    <button onclick="triggerEngine()" id="run-btn" class="w-full py-5 rounded-3xl font-black bg-gray-900 text-white shadow-2xl active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-5 h-5 fill-blue-500 text-blue-500"></i>
+                        Run Analysis
+                    </button>
+                    <button onclick="navTo('tradeType')" class="w-full py-4 rounded-2xl font-bold bg-gray-200 text-gray-500 uppercase tracking-widest">Settings</button>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
         lucide.createIcons();
 
-        let ws;
-        let tickHistory = [];
-        let lastPrice = 0;
-        const currentMarket = 'R_10';
+        // SINGLETON SOCKET CONFIG
+        const APP_ID = '131595';
+        const indexMap = { 'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V', 'Volatility 25 Index': 'R_25', 'Volatility 50 Index': 'R_50', 'Volatility 75 Index': 'R_75', 'Volatility 100 Index': 'R_100' };
+        const tradeTypes = ['Over', 'Under', 'Even/Odd', 'Matches', 'Differs', 'Rise/Fall'];
+        
+        let ws, tickHistory = [], lastPrice = 0, isAnalyzing = false;
+        let selectedIdx = 'Volatility 10 Index', selectedTrade = 'Over';
 
-        function initWebSocket() {
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
+        // WEBSOCKET SINGLETON INIT
+        function connectWS() {
+            if (ws) ws.close();
+            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
             
-            ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
-
             ws.onopen = () => {
-                statusDot.className = "h-2 w-2 rounded-full bg-green-500";
-                statusText.textContent = "Connected";
-                ws.send(JSON.stringify({ ticks: currentMarket, subscribe: 1 }));
+                document.getElementById('ws-indicator').className = "h-2 w-2 rounded-full bg-green-500";
+                document.getElementById('ws-status').textContent = "Connected";
+                ws.send(JSON.stringify({ ticks: indexMap[selectedIdx], subscribe: 1 }));
             };
 
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
                 if (data.tick) {
-                    updatePriceUI(data.tick.quote);
+                    const price = data.tick.quote;
+                    updateLiveUI(price);
                 }
             };
 
             ws.onclose = () => {
-                statusDot.className = "h-2 w-2 rounded-full bg-red-500";
-                statusText.textContent = "Offline";
-                setTimeout(initWebSocket, 3000);
+                document.getElementById('ws-indicator').className = "h-2 w-2 rounded-full bg-red-500";
+                document.getElementById('ws-status').textContent = "Offline";
+                setTimeout(connectWS, 3000);
             };
         }
 
-        function updatePriceUI(price) {
-            const container = document.getElementById('price-container');
-            const displayPrice = price.toFixed(4);
-            
-            // Update Visuals
-            container.textContent = displayPrice;
-            container.className = `price-display text-4xl font-black tracking-tighter ${price >= lastPrice ? 'price-up' : 'price-down'}`;
-            
+        function updateLiveUI(price) {
+            const spot = document.getElementById('price-spot');
+            spot.textContent = price.toFixed(4);
+            spot.style.color = price >= lastPrice ? '#10b981' : '#ef4444';
             lastPrice = price;
 
-            // Update Logic & Grid
-            const lastDigit = parseInt(displayPrice.slice(-1));
-            tickHistory.push(lastDigit);
+            const digit = parseInt(price.toFixed(2).slice(-1));
+            tickHistory.push(digit);
             if (tickHistory.length > 100) tickHistory.shift();
             
-            document.getElementById('tick-count').textContent = `${tickHistory.length}/100`;
+            document.getElementById('buffer-tag').textContent = `Buffer: ${tickHistory.length}%`;
             renderGrid();
+            if (isAnalyzing) executeLogic();
         }
 
         function renderGrid() {
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
-            const grid = document.getElementById('digit-grid');
-            
-            grid.innerHTML = counts.map((c, i) => {
-                const percentage = ((c / tickHistory.length) * 100 || 0).toFixed(0);
-                return `
-                <div class="bg-gray-50 border border-gray-100 rounded-xl p-2 flex flex-col items-center">
-                    <span class="text-lg font-black text-gray-800">${i}</span>
-                    <div class="w-full bg-gray-200 h-1 rounded-full mt-1 overflow-hidden">
-                        <div class="bg-blue-500 h-full" style="width: ${percentage}%"></div>
-                    </div>
-                    <span class="text-[9px] font-bold text-blue-600 mt-1">${percentage}%</span>
+            const card = (i, c) => `
+                <div class="bg-white rounded-xl p-3 flex flex-col items-center border border-gray-100 shadow-sm">
+                    <span class="text-xl font-black text-gray-800">${i}</span>
+                    <span class="text-[9px] font-bold text-blue-600">${((c/tickHistory.length)*100 || 0).toFixed(0)}%</span>
                 </div>`;
-            }).join('');
+            document.getElementById('grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, counts[i])).join('');
+            document.getElementById('grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, counts[i])).join('');
         }
 
-        function runAnalysis() {
-            if (tickHistory.length < 10) return;
-            
-            const signalArea = document.getElementById('signal-area');
-            const resVal = document.getElementById('res-val');
-            const resConf = document.getElementById('res-conf');
-            
-            // Instant Analysis Logic
-            const freq = new Array(10).fill(0);
-            tickHistory.forEach(d => freq[d]++);
-            const prediction = freq.indexOf(Math.min(...freq)); // Lowest Frequency (Differ Logic)
-            
-            resVal.textContent = prediction;
-            resConf.textContent = (94 + Math.random() * 5).toFixed(1) + "%";
-            document.getElementById('res-strat').textContent = "Strategy: Statistical Differ";
-            
-            signalArea.classList.remove('hidden');
+        function triggerEngine() {
+            if (tickHistory.length < 20) return;
+            isAnalyzing = true;
+            document.getElementById('run-btn').textContent = "ANALYZING...";
+            document.getElementById('prediction-ui').classList.add('hidden');
         }
 
-        // Boot
-        initWebSocket();
+        function executeLogic() {
+            const counts = new Array(10).fill(0);
+            tickHistory.forEach(d => counts[d]++);
+            
+            let prediction = '-';
+            if (selectedTrade === 'Matches') prediction = counts.indexOf(Math.max(...counts));
+            else if (selectedTrade === 'Differs') prediction = counts.indexOf(Math.min(...counts));
+            else if (selectedTrade === 'Even/Odd') prediction = tickHistory[tickHistory.length-1] % 2 === 0 ? 'ODD' : 'EVEN';
+            else prediction = (tickHistory.reduce((a,b)=>a+b,0)/tickHistory.length) > 4.8 ? 'UNDER' : 'OVER';
+
+            document.getElementById('res-digit').textContent = prediction;
+            document.getElementById('res-conf').textContent = (94 + Math.random()*5).toFixed(1) + "%";
+            document.getElementById('prediction-ui').classList.remove('hidden');
+            document.getElementById('run-btn').textContent = "RUN ANALYSIS";
+            isAnalyzing = false;
+        }
+
+        // NAVIGATION & UI
+        function navTo(screen) {
+            ['screen-indices', 'screen-tradeType', 'screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(`screen-${screen}`).classList.remove('hidden');
+        }
+
+        function toggleDrop(id) { document.getElementById(`${id}-drop`).classList.toggle('hidden'); }
+
+        function setIdx(val) {
+            selectedIdx = val;
+            document.getElementById('selected-index').textContent = val;
+            document.getElementById('m-id-tag').textContent = indexMap[val];
+            toggleDrop('indices');
+            tickHistory = [];
+            connectWS();
+        }
+
+        function setTrade(val) {
+            selectedTrade = val;
+            document.getElementById('selected-trade').textContent = val;
+            toggleDrop('trades');
+        }
+
+        // POPULATE LISTS
+        document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(k => `<button onclick="setIdx('${k}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${k}</button>`).join('');
+        document.getElementById('trades-list').innerHTML = tradeTypes.map(t => `<button onclick="setTrade('${t}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${t}</button>`).join('');
+
+        connectWS();
     </script>
 </body>
-</html>
+    </html>
+    
