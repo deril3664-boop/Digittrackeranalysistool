@@ -3,46 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro</title>
+    <title>AimagicsPro - Advanced Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-        
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            min-height: 100dvh;
-        }
-
-        /* Full Screen Phone Logic */
-        .app-shell {
-            width: 100%;
-            max-width: 500px;
-            min-height: 100dvh;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        @media (max-width: 640px) {
-            .app-shell { max-width: 100%; border-radius: 0; }
-        }
-
-        @keyframes pulse-ring {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-        }
+        body { font-family: 'Inter', sans-serif; background: #000; display: flex; justify-content: center; min-height: 100dvh; }
+        .app-shell { width: 100%; max-width: 500px; background: #f9fafb; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
+        @media (max-width: 640px) { .app-shell { border-radius: 0; } }
+        @keyframes pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } }
         .prediction-pulse { animation: pulse-ring 1.5s infinite; }
+        .dropdown-enter { animation: dropdown-in 0.15s ease-out; }
+        @keyframes dropdown-in { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
     </style>
 </head>
 <body>
-
     <div class="app-shell">
         <header class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-4 py-4 flex items-center justify-between shadow-md">
             <h1 class="text-lg font-semibold tracking-wide">AimagicsPro</h1>
@@ -56,58 +32,61 @@
 
         <div class="mx-4 mt-4 mb-6">
             <div class="bg-cyan-50 border border-cyan-200 rounded-lg py-2.5 px-4 text-center">
-                <p class="text-cyan-700 text-sm font-semibold tracking-wide uppercase">
-                    Welcome Amos to Binary Option
-                </p>
+                <p class="text-cyan-700 text-sm font-semibold tracking-wide uppercase">Welcome Amos to Binary Option</p>
             </div>
         </div>
 
         <main class="flex-1 overflow-y-auto px-4 pb-10">
-            <div id="screen-indices" class="">
+            <div id="screen-indices">
                 <label class="block text-gray-900 text-xl font-bold mb-3">Binary Indices</label>
-                <div class="relative">
-                    <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between">
-                        <span id="selected-index" class="text-gray-800 font-medium">Volatility 10 Index</span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>
-                    </button>
-                    <div id="indices-dropdown" class="hidden absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200 overflow-hidden">
-                        <div class="max-h-[300px] overflow-y-auto" id="indices-list"></div>
-                    </div>
+                <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-4 px-4 text-left flex items-center justify-between">
+                    <span id="selected-index" class="text-gray-800 font-medium">Volatility 10 Index</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>
+                </button>
+                <div id="indices-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200 dropdown-enter overflow-hidden">
+                    <div class="max-h-80 overflow-y-auto" id="indices-list"></div>
                 </div>
-                <button onclick="goToTradeType()" class="w-full mt-8 py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Next</button>
+                <div class="space-y-3 mt-8">
+                    <button onclick="goToTradeType()" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Next</button>
+                </div>
             </div>
 
             <div id="screen-tradeType" class="hidden">
                 <label class="block text-gray-900 text-xl font-bold mb-3">Trade Type</label>
-                <div class="relative">
-                    <button onclick="toggleDropdown('tradeType')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between">
-                        <span id="selected-trade" class="text-gray-800 font-medium">Over</span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>
-                    </button>
-                    <div id="tradeType-dropdown" class="hidden absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200">
-                        <div id="tradeType-list"></div>
-                    </div>
+                <button onclick="toggleDropdown('tradeType')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-4 px-4 text-left flex items-center justify-between">
+                    <span id="selected-trade" class="text-gray-800 font-medium">Over</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>
+                </button>
+                <div id="tradeType-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200 dropdown-enter">
+                    <div id="tradeType-list"></div>
                 </div>
                 <div class="space-y-3 mt-8">
                     <button onclick="goToAnalysis()" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Start Terminal</button>
-                    <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95 transition-all">Back</button>
+                    <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95">Back</button>
                 </div>
             </div>
 
-            <div id="screen-analysis" class="hidden space-y-6">
+            <div id="screen-analysis" class="hidden">
                 <div class="grid grid-cols-5 gap-2" id="digit-grid-top"></div>
-                <div class="grid grid-cols-5 gap-2" id="digit-grid-bottom"></div>
+                <div class="grid grid-cols-5 gap-2 mt-2" id="digit-grid-bottom"></div>
 
-                <div id="prediction-container" class="hidden mt-8 flex flex-col items-center">
-                    <div class="w-28 h-28 rounded-full border-4 border-blue-500 flex items-center justify-center bg-white prediction-pulse shadow-xl">
-                        <span id="final-recommendation" class="font-black text-blue-700 leading-none">-</span>
+                <div id="analysis-status" class="hidden flex flex-col items-center justify-center gap-2 mt-5 text-gray-500">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin text-blue-500"></i>
+                        <span id="status-text" class="text-sm font-medium">Validating Signal (0/3)...</span>
                     </div>
-                    <p id="confidence-text" class="text-[10px] text-blue-500 mt-4 font-bold uppercase tracking-widest"></p>
                 </div>
 
-                <div class="space-y-3 pt-4">
-                    <button onclick="calculateDominantSignal()" id="run-btn" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">RUN ANALYSIS</button>
-                    <button onclick="goToTradeType()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95 transition-all">Back</button>
+                <div id="prediction-container" class="hidden mt-6 flex flex-col items-center">
+                    <div class="w-24 h-24 rounded-full border-4 border-red-500 flex flex-col items-center justify-center bg-white prediction-pulse">
+                        <span id="final-recommendation" class="text-3xl font-black text-blue-700">-</span>
+                        <span id="confidence-score" class="text-[10px] font-bold text-gray-400">0%</span>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-3">
+                    <button onclick="triggerEngineAnalysis()" id="run-btn" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Run Analysis</button>
+                    <button onclick="goToTradeType()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95">Back</button>
                 </div>
             </div>
         </main>
@@ -116,34 +95,151 @@
     <script>
         lucide.createIcons();
 
-        // --- SILENT WEBSOCKET (131595) ---
-        const A_I = '131595';
-        let ws, tickHistory = [];
-        const indexMap = {
-            'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V',
-            'Volatility 25 Index': 'R_25', 'Volatility 25 (1s) Index': '1HZ25V',
-            'Volatility 50 Index': 'R_50', 'Volatility 50 (1s) Index': '1HZ50V',
-            'Volatility 75 Index': 'R_75', 'Volatility 75 (1s) Index': '1HZ75V',
-            'Volatility 100 Index': 'R_100', 'Volatility 100 (1s) Index': '1HZ100V'
-        };
+        // ============================================
+        // ENGINE CORE (Strategy Manager & Logic)
+        // ============================================
+        class StrategyManager {
+            analyze(type, ticks) {
+                const prices = ticks.map(t => t.quote);
+                const lastDigits = prices.map(p => parseInt(p.toFixed(2).slice(-1)));
+                
+                switch (type.toLowerCase()) {
+                    case 'matches': return this.analyzeMD(lastDigits, 'matches');
+                    case 'differs': return this.analyzeMD(lastDigits, 'differs');
+                    case 'even/odd': return this.analyzeEO(lastDigits);
+                    case 'over': return this.analyzeOU(lastDigits, 'over');
+                    case 'under': return this.analyzeOU(lastDigits, 'under');
+                    case 'rise/fall': return this.analyzeRF(prices);
+                    default: return { prediction: '...', confidence: 0 };
+                }
+            }
 
-        function connectWS() {
-            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${A_I}`);
-            ws.onopen = () => subscribeTicks();
+            analyzeMD(digits, type) {
+                const freq = new Array(10).fill(0);
+                digits.forEach(d => freq[d]++);
+                const probs = freq.map((c, d) => ({ d, p: (c / digits.length) * 100 })).sort((a,b) => b.p - a.p);
+                return { 
+                    prediction: type === 'matches' ? probs[0].d : probs[9].d, 
+                    confidence: type === 'matches' ? probs[0].p : (100 - probs[9].p)
+                };
+            }
+
+            analyzeEO(digits) {
+                const evens = digits.filter(d => d % 2 === 0).length;
+                const prediction = evens > (digits.length / 2) ? 'EVEN' : 'ODD';
+                return { prediction, confidence: (Math.max(evens, digits.length - evens) / digits.length) * 100 };
+            }
+
+            analyzeOU(digits, type) {
+                const mean = digits.reduce((a, b) => a + b, 0) / digits.length;
+                const prediction = mean > 5 ? 'UNDER' : 'OVER'; // Mean reversal logic from engine
+                return { prediction, confidence: 50 + Math.abs(mean - 5) * 8 };
+            }
+
+            analyzeRF(prices) {
+                const last = prices[prices.length - 1];
+                const prev = prices[prices.length - 2];
+                const prediction = last > prev ? 'RISE' : 'FALL';
+                return { prediction, confidence: 75 };
+            }
+        }
+
+        // ============================================
+        // WEBSOCKET & STATE CONTROLLER
+        // ============================================
+        const APP_ID = '1089'; 
+        const strategyManager = new StrategyManager();
+        let ws, tickHistory = [], confirmationCount = 0, pendingSignal = null;
+        const indexMap = { 'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V', 'Volatility 25 Index': 'R_25', 'Volatility 50 Index': 'R_50', 'Volatility 100 Index': 'R_100' };
+
+        function connect() {
+            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
                 if (data.tick) {
-                    const d = parseInt(data.tick.quote.toString().slice(-1));
-                    tickHistory.push(d);
+                    const tick = { quote: data.tick.quote, epoch: data.tick.epoch };
+                    tickHistory.push(tick);
                     if (tickHistory.length > 100) tickHistory.shift();
-                    updateLiveGrid();
+                    updateUI();
+                    if (isAnalyzing) processEngineTick(tick);
                 }
             };
-            ws.onclose = () => setTimeout(connectWS, 3000);
         }
 
-        function subscribeTicks() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const symbol = indexMap[selectedIndex] || 'R_10';
+        function subscribe() {
+            if (ws?.readyState === 1) {
                 ws.send(JSON.stringify({ forget_all: "ticks" }));
-                
+                ws.send(JSON.stringify({ ticks: indexMap[selectedIndex] || 'R_10', subscribe: 1 }));
+            }
+        }
+
+        let isAnalyzing = false;
+        function triggerEngineAnalysis() {
+            isAnalyzing = true;
+            confirmationCount = 0;
+            pendingSignal = null;
+            document.getElementById('analysis-status').classList.remove('hidden');
+            document.getElementById('prediction-container').classList.add('hidden');
+            document.getElementById('run-btn').disabled = true;
+        }
+
+        function processEngineTick(tick) {
+            const currentResult = strategyManager.analyze(selectedTradeType, tickHistory);
+            
+            // STABILITY GATE: Signal must be stable for 3 consecutive ticks
+            if (!pendingSignal || pendingSignal.prediction !== currentResult.prediction) {
+                pendingSignal = currentResult;
+                confirmationCount = 1;
+            } else {
+                confirmationCount++;
+            }
+
+            document.getElementById('status-text').textContent = `Validating Signal (${confirmationCount}/3)...`;
+
+            if (confirmationCount >= 3) {
+                displayFinalSignal(currentResult);
+                isAnalyzing = false;
+            }
+        }
+
+        function displayFinalSignal(result) {
+            const container = document.getElementById('prediction-container');
+            const rec = document.getElementById('final-recommendation');
+            const conf = document.getElementById('confidence-score');
+            
+            rec.textContent = result.prediction;
+            conf.textContent = `${Math.min(result.confidence, 99.9).toFixed(1)}%`;
+            
+            document.getElementById('analysis-status').classList.add('hidden');
+            container.classList.remove('hidden');
+            document.getElementById('run-btn').disabled = false;
+        }
+
+        function updateUI() {
+            const lastDigits = tickHistory.map(t => parseInt(t.quote.toFixed(2).slice(-1)));
+            const counts = new Array(10).fill(0);
+            lastDigits.forEach(d => counts[d]++);
+            const card = (d, c) => `<div class="bg-white rounded-xl p-3 flex flex-col items-center border-2 border-gray-100 shadow-sm"><span class="text-2xl font-bold text-gray-800">${d}</span><span class="text-[10px] text-blue-500 font-bold">${((c/tickHistory.length)*100 || 0).toFixed(0)}%</span></div>`;
+            document.getElementById('digit-grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, counts[i])).join('');
+            document.getElementById('digit-grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, counts[i])).join('');
+        }
+
+        // NAVIGATION & INIT
+        let selectedIndex = 'Volatility 10 Index', selectedTradeType = 'Over';
+        function populate() {
+            document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(i => `<button onclick="setIdx('${i}')" class="w-full text-left py-4 px-5 hover:bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-700">${i}</button>`).join('');
+            document.getElementById('tradeType-list').innerHTML = ['Over','Under','Matches','Differs','Even/Odd','Rise/Fall'].map(t => `<button onclick="setTrade('${t}')" class="w-full text-left py-4 px-5 hover:bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-700">${t}</button>`).join('');
+        }
+        function setIdx(v) { selectedIndex = v; document.getElementById('selected-index').textContent = v; toggleDropdown('indices'); subscribe(); }
+        function setTrade(v) { selectedTradeType = v; document.getElementById('selected-trade').textContent = v; toggleDropdown('tradeType'); }
+        function toggleDropdown(id) { document.getElementById(`${id}-dropdown`).classList.toggle('hidden'); }
+        function toggleScreen(id) { ['screen-indices','screen-tradeType','screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+        function goToTradeType() { toggleScreen('screen-tradeType'); }
+        function goToIndices() { toggleScreen('screen-indices'); }
+        function goToAnalysis() { toggleScreen('screen-analysis'); }
+
+        populate();
+        connect();
+    </script>
+</body>
+</html>
