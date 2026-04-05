@@ -3,46 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro - Full Screen</title>
+    <title>AimagicsPro - Dominant Logic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-        
-        /* Reset and Full Screen logic */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         body {
             font-family: 'Inter', sans-serif;
             background: #000;
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            min-height: 100vh;
-            min-height: 100dvh; /* Modern mobile viewport height */
+            min-height: 100dvh;
         }
-
-        /* Responsive Shell: Fills phone, centers on Laptop/Mac */
         .app-shell {
             width: 100%;
-            max-width: 500px; /* Constraint for large screens */
-            min-height: 100vh;
+            max-width: 500px;
             min-height: 100dvh;
             background: #ffffff;
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
-
-        /* Mobile specific: Remove border radius when on small screens to fill edge-to-edge */
-        @media (max-width: 640px) {
-            .app-shell {
-                max-width: 100%;
-                border-radius: 0;
-            }
-        }
-
+        @media (max-width: 640px) { .app-shell { max-width: 100%; border-radius: 0; } }
         @keyframes pulse-ring {
             0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
             50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
@@ -69,24 +53,19 @@
             </div>
         </div>
 
-        <main class="flex-1 px-5 pt-8 overflow-y-auto">
+        <main class="flex-1 px-5 pt-8 overflow-y-auto pb-10">
             <div id="screen-indices" class="space-y-6">
                 <label class="block text-[#1e293b] text-2xl font-extrabold">Binary Indices</label>
-                
                 <div class="relative">
-                    <button onclick="toggleDropdown('indices')" class="w-full bg-white border-2 border-[#e2e8f0] rounded-xl py-4 px-5 text-left flex items-center justify-between shadow-sm active:border-blue-400 transition-all">
+                    <button onclick="toggleDropdown('indices')" class="w-full bg-white border-2 border-[#e2e8f0] rounded-xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
                         <span id="selected-index" class="text-[#334155] font-semibold">Volatility 10 Index</span>
                         <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400"></i>
                     </button>
-                    
                     <div id="indices-dropdown" class="hidden absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 overflow-hidden">
                         <div class="max-h-[350px] overflow-y-auto" id="indices-list"></div>
                     </div>
                 </div>
-
-                <button onclick="goToTradeType()" class="w-full py-5 rounded-xl font-black text-lg bg-[#3b82f6] text-white shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">
-                    Next
-                </button>
+                <button onclick="goToTradeType()" class="w-full py-5 rounded-xl font-black text-lg bg-[#3b82f6] text-white shadow-xl active:scale-[0.98]">Next</button>
             </div>
 
             <div id="screen-tradeType" class="hidden space-y-6">
@@ -110,16 +89,19 @@
                 <div class="grid grid-cols-5 gap-2" id="digit-grid-top"></div>
                 <div class="grid grid-cols-5 gap-2" id="digit-grid-bottom"></div>
 
-                <div id="prediction-container" class="flex flex-col items-center py-6">
-                    <div class="w-32 h-32 rounded-full border-[6px] border-blue-500 flex items-center justify-center bg-white prediction-pulse shadow-2xl">
-                        <span id="final-recommendation" class="font-black text-[#1d4ed8] leading-none">-</span>
+                <div id="prediction-container" class="hidden flex flex-col items-center py-4">
+                    <div class="relative">
+                        <div class="w-32 h-32 rounded-full border-[6px] border-blue-600 flex items-center justify-center bg-white prediction-pulse shadow-2xl">
+                            <span id="final-recommendation" class="font-black text-[#1d4ed8] leading-none">-</span>
+                        </div>
+                        <div id="signal-badge" class="absolute -bottom-2 bg-green-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase">Strong</div>
                     </div>
-                    <p id="confidence-text" class="text-[#3b82f6] mt-6 font-black tracking-[0.3em] text-[10px] uppercase"></p>
+                    <p id="confidence-text" class="text-[#3b82f6] mt-6 font-black tracking-[0.2em] text-[10px] uppercase"></p>
                 </div>
 
                 <div class="space-y-4">
-                    <button onclick="requestSignal()" id="run-btn" class="w-full py-5 rounded-2xl font-black text-xl bg-[#3b82f6] text-white shadow-2xl active:scale-95 transition-all">Get Signal</button>
-                    <button onclick="goToTradeType()" class="w-full py-4 font-bold text-[#94a3b8] text-center">Back to Settings</button>
+                    <button onclick="processDominantSignal()" id="run-btn" class="w-full py-5 rounded-2xl font-black text-xl bg-[#3b82f6] text-white shadow-2xl active:scale-95 transition-all">GET SIGNAL</button>
+                    <button onclick="goToTradeType()" class="w-full py-4 font-bold text-[#94a3b8] text-center">Back</button>
                 </div>
             </div>
         </main>
@@ -128,8 +110,7 @@
     <script>
         lucide.createIcons();
 
-        // --- SILENT WEBSOCKET ---
-        const A_I = '131595';
+        const APP_ID = '131595';
         let ws;
         let tickHistory = [];
         const indexMap = {
@@ -141,13 +122,15 @@
         };
 
         function connectWS() {
-            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${A_I}`);
+            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
             ws.onopen = () => subscribeToTicks();
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
                 if (data.tick) {
                     const lastDigit = parseInt(data.tick.quote.toString().slice(-1));
-                    updateGrid(lastDigit);
+                    tickHistory.push(lastDigit);
+                    if (tickHistory.length > 100) tickHistory.shift();
+                    updateGridDisplay();
                 }
             };
             ws.onclose = () => setTimeout(connectWS, 3000);
@@ -161,44 +144,57 @@
             }
         }
 
-        function updateGrid(newDigit) {
-            tickHistory.push(newDigit);
-            if (tickHistory.length > 50) tickHistory.shift();
+        function updateGridDisplay() {
             const counts = new Array(10).fill(0);
             tickHistory.forEach(d => counts[d]++);
-            const probs = counts.map(c => (c / tickHistory.length) * 100);
+            const probs = counts.map(c => tickHistory.length ? (c / tickHistory.length) * 100 : 0);
 
             const card = (d, p) => `<div class="bg-white rounded-xl p-3 flex flex-col items-center justify-center border-2 border-[#f1f5f9] shadow-sm"><span class="text-xl font-black text-[#1e293b]">${d}</span><span class="text-[9px] mt-1 text-blue-600 font-bold">${p.toFixed(0)}%</span></div>`;
             document.getElementById('digit-grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, probs[i])).join('');
             document.getElementById('digit-grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, probs[i])).join('');
         }
 
-        function requestSignal() {
-            if (tickHistory.length < 5) return;
-            const probs = new Array(10).fill(0);
-            tickHistory.forEach(d => probs[d]++);
-            const sortedProbs = probs.map((c, i) => ({d:i, p:(c/tickHistory.length)*100})).sort((a,b)=>b.p-a.p);
+        function processDominantSignal() {
+            if (tickHistory.length < 20) return;
+
+            const counts = new Array(10).fill(0);
+            tickHistory.forEach(d => counts[d]++);
+            const probs = counts.map((c, i) => ({digit: i, prob: (c / tickHistory.length) * 100}));
+            const sorted = [...probs].sort((a,b) => b.prob - a.prob);
             
             const recEl = document.getElementById('final-recommendation');
-            const isWord = ['Even/Odd', 'Rise/Fall'].includes(selectedTradeType);
-
-            if (isWord) {
-                const signal = selectedTradeType === 'Even/Odd' ? (tickHistory[tickHistory.length-1] % 2 === 0 ? "EVEN" : "ODD") : (tickHistory[tickHistory.length-1] > tickHistory[tickHistory.length-2] ? "RISE" : "FALL");
+            const badge = document.getElementById('signal-badge');
+            
+            // Logic for dominant signal
+            if (['Even/Odd', 'Rise/Fall'].includes(selectedTradeType)) {
+                let signal = "";
+                if (selectedTradeType === 'Even/Odd') {
+                    const evens = probs.filter(x => x.digit % 2 === 0).reduce((a,b)=>a+b.prob, 0);
+                    signal = evens > 50 ? "EVEN" : "ODD";
+                } else {
+                    signal = tickHistory[tickHistory.length-1] > tickHistory[tickHistory.length-2] ? "RISE" : "FALL";
+                }
                 recEl.textContent = signal;
-                recEl.className = "font-black text-[#1d4ed8] text-2xl uppercase tracking-tighter";
+                recEl.className = "font-black text-[#1d4ed8] text-2xl uppercase";
             } else {
-                recEl.textContent = tickHistory[tickHistory.length-1];
+                // Dominant digit logic
+                recEl.textContent = sorted[0].digit;
                 recEl.className = "font-black text-[#1d4ed8] text-7xl";
             }
-            document.getElementById('confidence-text').textContent = `Dominance: ${Math.round(sortedProbs[0].p)}%`;
+
+            // Strength Indicator
+            const isStrong = sorted[0].prob > 15;
+            badge.textContent = isStrong ? "Strong Signal" : "Weak Signal";
+            badge.className = `absolute -bottom-2 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase ${isStrong ? 'bg-green-600' : 'bg-amber-500'}`;
+
+            document.getElementById('confidence-text').textContent = `Dominance: ${Math.round(sorted[0].prob)}%`;
             document.getElementById('prediction-container').classList.remove('hidden');
         }
 
-        // --- NAVIGATION & DROPDOWNS ---
         let selectedIndex = 'Volatility 10 Index', selectedTradeType = 'Over';
         function populate() {
             document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(i => `<button onclick="setIdx('${i}')" class="w-full text-left py-4 px-6 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${i}</button>`).join('');
-            document.getElementById('tradeType-list').innerHTML = ['Over','Under','Matches','Differs','Even/Odd','Rise/Fall'].map(t => `<button onclick="setTrade('${t}')" class="w-full text-left py-4 px-6 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${t}</button>`).join('');
+            document.getElementById('tradeType-list').innerHTML = ['Over','Under','Matches','Differs','Even/Odd','Rise/Fall'].map(t => `<button onclick="setTrade('${t}')" class="w-full text-left py-4 px-6 hover:bg-gray-50 border-b border-gray-100 text-sm font-bold text-gray-700">${t}</button>`).join('');
         }
         function setIdx(v) { selectedIndex = v; document.getElementById('selected-index').textContent = v; toggleDropdown('indices'); subscribeToTicks(); }
         function setTrade(v) { selectedTradeType = v; document.getElementById('selected-trade').textContent = v; toggleDropdown('tradeType'); }
@@ -212,5 +208,5 @@
         connectWS();
     </script>
 </body>
-                                                                                               </html>
-                                                                                               
+    </html>
+    
