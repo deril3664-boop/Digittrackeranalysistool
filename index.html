@@ -2,199 +2,346 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro - Final Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AimagicsPro - Binary Options</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: #000; display: flex; justify-content: center; min-height: 100dvh; }
-        .app-shell { width: 100%; max-width: 500px; background: #fff; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
-        .prediction-ring { border: 4px solid #3b82f6; animation: pulse-blue 1.5s infinite; }
-        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-        .price-mono { font-family: 'JetBrains Mono', monospace; transition: color 0.2s; }
-        .dropdown-animate { animation: slideDown 0.2s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background: #000; }
+        
+        @keyframes pulse-ring {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+        }
+        
+        .prediction-pulse { animation: pulse-ring 2s infinite; }
+        
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .signal-appear { animation: slide-up 0.4s ease-out; }
+        
+        .confidence-bar { transition: width 0.8s ease-out; }
+        
+        .ws-status { transition: all 0.3s ease; }
+        .ws-connected { background-color: #d1fae5; border-color: #10b981; color: #065f46; }
+        .ws-connecting { background-color: #fef3c7; border-color: #f59e0b; color: #92400e; }
+        .ws-disconnected { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        
+        .ws-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .ws-dot.connected { background-color: #10b981; }
+        .ws-dot.connecting { background-color: #f59e0b; animation: pulse 1s infinite; }
+        .ws-dot.disconnected { background-color: #ef4444; }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .tick-stream { font-family: 'Courier New', monospace; }
+        
+        .strategy-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .strategy-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .strategy-card.selected { border-color: #3b82f6; background-color: #eff6ff; }
+        
+        .stable-signal {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stable-signal::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .history-sync {
+            background: linear-gradient(90deg, #10b981, #3b82f6, #10b981);
+            background-size: 200% 100%;
+            animation: syncing 1.5s ease infinite;
+        }
+        
+        @keyframes syncing {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .signal-locked {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+        }
     </style>
 </head>
-<body>
-    <div class="app-shell">
-        <header class="bg-gray-900 text-white px-5 py-4 flex items-center justify-between shadow-md">
-            <h1 class="text-xl font-black tracking-tighter italic uppercase">AimagicsPro</h1>
+<body class="bg-black min-h-screen flex items-center justify-center p-4">
+    
+    <div class="w-full max-w-sm bg-gray-50 min-h-[850px] rounded-3xl overflow-hidden shadow-2xl relative">
+        
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md">
+            <h1 class="text-lg font-semibold tracking-wide">AimagicsPro</h1>
             <div class="flex items-center gap-2">
-                <div id="ws-indicator" class="h-2 w-2 rounded-full bg-red-500"></div>
-                <span id="ws-status" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Offline</span>
+                <span class="text-xs text-gray-400 font-medium">131595</span>
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/>
+                </svg>
             </div>
         </header>
 
-        <div class="mx-4 mt-4 mb-4">
-            <div class="bg-cyan-50 border border-cyan-100 rounded-lg py-3 px-4 text-center">
-                <p class="text-cyan-600 text-[10px] font-black tracking-widest uppercase italic">Welcome Amos to Binary Option</p>
+        <!-- History Sync Status Indicator -->
+        <div id="history-sync-status" class="hidden mx-4 mt-2">
+            <div class="history-sync rounded-lg py-2 px-3 text-white text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <i data-lucide="database" class="w-4 h-4 animate-bounce"></i>
+                    <span class="text-xs font-semibold">Syncing 45-Tick History...</span>
+                </div>
             </div>
         </div>
 
-        <main class="flex-1 overflow-y-auto px-4 pb-10">
-            <div id="screen-indices">
-                <label class="block text-gray-900 text-lg font-black mb-2 tracking-tight">Binary Indices</label>
-                <div class="relative">
-                    <button onclick="toggleDrop('indices')" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
-                        <span id="selected-index" class="text-gray-700 font-semibold">Volatility 10 Index</span>
-                        <i data-lucide="chevron-down" class="text-gray-400 w-5 h-5"></i>
-                    </button>
-                    <div id="indices-drop" class="hidden absolute w-full mt-2 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 dropdown-animate overflow-hidden">
-                        <div id="indices-list" class="max-h-60 overflow-y-auto"></div>
-                    </div>
-                </div>
-                <button onclick="navTo('tradeType')" class="w-full mt-8 py-4 rounded-xl font-black bg-blue-500 text-white shadow-lg active:scale-95 transition-all uppercase tracking-widest">Next</button>
-            </div>
-
-            <div id="screen-tradeType" class="hidden">
-                <label class="block text-gray-900 text-lg font-black mb-2 tracking-tight">Trade Type</label>
-                <div class="relative">
-                    <button onclick="toggleDrop('trades')" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-5 text-left flex items-center justify-between shadow-sm">
-                        <span id="selected-trade" class="text-gray-700 font-semibold">Over</span>
-                        <i data-lucide="chevron-down" class="text-gray-400 w-5 h-5"></i>
-                    </button>
-                    <div id="trades-drop" class="hidden absolute w-full mt-2 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 dropdown-animate overflow-hidden">
-                        <div id="trades-list"></div>
-                    </div>
-                </div>
-                <div class="mt-8 space-y-3">
-                    <button onclick="navTo('analysis')" class="w-full py-4 rounded-xl font-black bg-blue-500 text-white shadow-lg active:scale-95 transition-all uppercase tracking-widest">Next</button>
-                    <button onclick="navTo('indices')" class="w-full py-4 rounded-xl font-bold bg-blue-400 text-white shadow-md uppercase tracking-widest">Back</button>
+        <!-- Clean Sweep Status Indicator -->
+        <div id="clean-sweep-status" class="hidden mx-4 mt-2">
+            <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg py-2 px-3 text-white text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span class="text-xs font-semibold">CLEAN SWEEP: Purging old data...</span>
                 </div>
             </div>
+        </div>
 
-            <div id="screen-analysis" class="hidden">
-                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col items-center mb-6 shadow-sm">
-                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Live Market Figure</span>
-                    <div id="price-spot" class="price-mono text-4xl font-black tracking-tighter text-gray-900">0.0000</div>
-                    <div class="mt-2 text-[10px] font-bold text-blue-500 bg-blue-50 px-3 py-0.5 rounded-full" id="m-id-tag">R_10</div>
+        <!-- WebSocket Status Bar -->
+        <div id="ws-status-bar" class="mx-4 mt-3">
+            <div id="ws-status-container" class="ws-status ws-disconnected border-2 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div id="ws-dot" class="ws-dot disconnected"></div>
+                    <span id="ws-status-text" class="text-xs font-semibold">Disconnected</span>
                 </div>
-
-                <div class="grid grid-cols-5 gap-2" id="grid-top"></div>
-                <div id="grid-bottom" class="grid grid-cols-5 gap-2 mt-2"></div>
-
-                <div id="prediction-ui" class="hidden mt-8 flex flex-col items-center">
-                    <div class="w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center prediction-ring shadow-xl">
-                        <span id="res-digit" class="text-4xl font-black text-gray-900">-</span>
-                        <span id="res-conf" class="text-[10px] font-bold text-blue-500">99.8%</span>
-                    </div>
-                    <p class="mt-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Signal Confirmed</p>
-                </div>
-
-                <div class="mt-10 space-y-3">
-                    <button onclick="triggerAnalysis()" id="run-btn" class="w-full py-4 rounded-xl font-black bg-blue-500 text-white shadow-xl active:scale-95 transition-all uppercase tracking-widest">Run</button>
-                    <button onclick="navTo('tradeType')" class="w-full py-4 rounded-xl font-bold bg-blue-400 text-white shadow-md uppercase tracking-widest">Back</button>
+                <div class="flex items-center gap-2">
+                    <span id="ws-tick-count" class="text-xs text-gray-500">0 ticks</span>
+                    <button onclick="toggleConnection()" id="ws-reconnect-btn" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded transition-colors font-medium">Connect</button>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
 
-    <script>
-        lucide.createIcons();
+        <!-- Welcome Banner -->
+        <div class="mx-4 mt-3 mb-4">
+            <div class="bg-cyan-50 border border-cyan-200 rounded-lg py-2.5 px-4 text-center">
+                <p class="text-cyan-700 text-sm font-semibold tracking-wide uppercase">Welcome Amos to Binary Option</p>
+            </div>
+        </div>
 
-        // SINGLETON SOCKET MANAGER
-        const DerivSocket = (() => {
-            let instance = null;
-            let tickHistory = [];
-            let lastPrice = 0;
-            const APP_ID = '131595';
-            const indexMap = { 'Volatility 10 Index': 'R_10', 'Volatility 10 (1s) Index': '1HZ10V', 'Volatility 25 Index': 'R_25', 'Volatility 50 Index': 'R_50', 'Volatility 75 Index': 'R_75', 'Volatility 100 Index': 'R_100' };
+        <!-- Screen 1: Binary Indices -->
+        <div id="screen-indices" class="px-4 pb-6">
+            <div class="mb-4">
+                <label class="block text-gray-900 text-xl font-bold mb-3">Binary Indices</label>
+                <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 transition-all">
+                    <span id="selected-index" class="text-gray-800 font-medium text-base">10 index</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-200" id="indices-chevron"></i>
+                </button>
+                <div id="indices-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 overflow-hidden border border-gray-200">
+                    <div class="max-h-80 overflow-y-auto" id="indices-list"></div>
+                </div>
+            </div>
+            <div class="space-y-3 mt-8">
+                <button onclick="goToStrategies()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Next</button>
+                <button class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-gray-300 text-gray-600 cursor-not-allowed">Back</button>
+            </div>
+        </div>
 
-            const init = (symbol) => {
-                if (instance) instance.close();
-                
-                const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`);
-                const indicator = document.getElementById('ws-indicator');
-                const status = document.getElementById('ws-status');
+        <!-- Screen 2: Strategy Selection -->
+        <div id="screen-strategies" class="hidden px-4 pb-6">
+            <label class="block text-gray-900 text-xl font-bold mb-3">Select Strategy</label>
+            <div class="space-y-3 mb-6">
+                <div onclick="selectStrategy('matches')" id="strategy-matches" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <i data-lucide="equal" class="w-5 h-5 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Matches / Differs</p>
+                                <p class="text-xs text-gray-500">Match specific digit or predict difference</p>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="check-matches">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden"></div>
+                        </div>
+                    </div>
+                </div>
 
-                ws.onopen = () => {
-                    indicator.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_#10b981]";
-                    status.textContent = "Connected";
-                    ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
-                };
+                <div onclick="selectStrategy('evenodd')" id="strategy-evenodd" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <i data-lucide="binary" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Even / Odd</p>
+                                <p class="text-xs text-gray-500">Predict even (0,2,4,6,8) or odd (1,3,5,7,9)</p>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="check-evenodd">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden"></div>
+                        </div>
+                    </div>
+                </div>
 
-                ws.onmessage = (msg) => {
-                    const data = JSON.parse(msg.data);
-                    if (data.tick) {
-                        const price = data.tick.quote;
-                        document.getElementById('price-spot').textContent = price.toFixed(4);
-                        document.getElementById('price-spot').style.color = price >= lastPrice ? '#10b981' : '#ef4444';
-                        lastPrice = price;
+                <div onclick="selectStrategy('overunder')" id="strategy-overunder" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <i data-lucide="arrow-up-down" class="w-5 h-5 text-emerald-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Over / Under</p>
+                                <p class="text-xs text-gray-500">Predict above or below threshold digit</p>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="check-overunder">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden"></div>
+                        </div>
+                    </div>
+                </div>
 
-                        const digit = parseInt(price.toFixed(2).slice(-1));
-                        tickHistory.push(digit);
-                        if (tickHistory.length > 100) tickHistory.shift();
-                        renderGrid(tickHistory);
-                    }
-                };
+                <div onclick="selectStrategy('risefall')" id="strategy-risefall" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Rise / Fall</p>
+                                <p class="text-xs text-gray-500">Predict price direction movement</p>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="check-risefall">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                ws.onclose = () => {
-                    indicator.className = "h-2 w-2 rounded-full bg-red-500";
-                    status.textContent = "Offline";
-                    setTimeout(() => init(symbol), 3000);
-                };
+            <div id="strategy-config" class="hidden mb-6 bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                <label class="block text-sm font-semibold text-gray-700 mb-2" id="config-label">Configuration</label>
+                <div id="config-content"></div>
+            </div>
 
-                instance = ws;
-            };
+            <div class="space-y-3">
+                <button onclick="goToAnalysis()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Next</button>
+                <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Back</button>
+            </div>
+        </div>
 
-            const renderGrid = (history) => {
-                const counts = new Array(10).fill(0);
-                history.forEach(d => counts[d]++);
-                const card = (i, c) => `
-                    <div class="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center shadow-sm">
-                        <span class="text-lg font-black text-gray-800">${i}</span>
-                        <span class="text-[9px] font-bold text-gray-400">${((c/history.length)*100 || 0).toFixed(1)}%</span>
-                    </div>`;
-                document.getElementById('grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, counts[i])).join('');
-                document.getElementById('grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, counts[i])).join('');
-            };
+        <!-- Screen 3: Analysis -->
+        <div id="screen-analysis" class="hidden">
+            
+            <div class="mx-4 mt-2">
+                <div class="bg-gray-900 rounded-xl p-3 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">Live Market</span>
+                        <div class="flex items-center gap-2">
+                            <span id="buffer-status" class="text-xs font-mono text-yellow-400">Buffer: 0/45</span>
+                            <span id="live-symbol" class="text-xs font-mono text-emerald-400">R_10</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span id="live-price" class="text-2xl font-bold tick-stream" style="color: #9ca3af;">0.0000</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-500">Digit:</span>
+                            <span id="live-digit" class="text-lg font-bold text-emerald-400">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-center gap-2">
+                        <div class="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="tick-progress" class="h-full bg-emerald-500 transition-all duration-100" style="width: 0%"></div>
+                        </div>
+                        <span id="tick-counter" class="text-xs text-gray-500 w-12 text-right">0/45</span>
+                    </div>
+                </div>
+            </div>
 
-            return { connect: (s) => init(s), getHistory: () => tickHistory };
-        })();
+            <div id="stable-signal" class="hidden mx-4 mt-3">
+                <div class="stable-signal rounded-2xl p-4 text-white shadow-lg signal-appear relative">
+                    <div class="absolute top-3 right-3 flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
+                        <i data-lucide="lock" class="w-3 h-3"></i>
+                        <span class="text-xs font-medium">LOCKED</span>
+                    </div>
 
-        // UI LOGIC
-        const tradeTypes = ['Over', 'Under', 'Matches', 'Differs', 'Rise/Fall', 'Even/Odd'];
-        let activeIdx = 'Volatility 10 Index';
-        let activeTrade = 'Over';
+                    <div class="flex items-center gap-2 mb-3">
+                        <i data-lucide="target" class="w-5 h-5"></i>
+                        <span class="font-semibold text-sm uppercase tracking-wider">Trading Signal</span>
+                    </div>
+                    
+                    <div class="text-center py-4">
+                        <div id="signal-type" class="text-sm text-blue-100 mb-2">Strategy</div>
+                        <div id="signal-value" class="text-5xl font-bold mb-2">-</div>
+                        <div id="signal-threshold" class="text-sm text-blue-100">Threshold: -</div>
+                    </div>
 
-        function navTo(screen) {
-            ['screen-indices', 'screen-tradeType', 'screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(`screen-${screen}`).classList.remove('hidden');
-        }
+                    <div class="space-y-2 mb-3">
+                        <div class="flex justify-between text-xs text-blue-100">
+                            <span>Confidence</span>
+                            <span id="signal-confidence">0%</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div id="confidence-bar" class="confidence-bar bg-white rounded-full h-2" style="width: 0%"></div>
+                        </div>
+                    </div>
 
-        function toggleDrop(id) { document.getElementById(`${id}-drop`).classList.toggle('hidden'); }
+                    <div class="grid grid-cols-3 gap-2 text-center text-xs border-t border-white/20 pt-3">
+                        <div>
+                            <div class="text-blue-200">Win Rate</div>
+                            <div id="stat-winrate" class="font-bold">0%</div>
+                        </div>
+                        <div>
+                            <div class="text-blue-200">Ticks</div>
+                            <div id="stat-ticks" class="font-bold">0</div>
+                        </div>
+                        <div>
+                            <div class="text-blue-200">Trend</div>
+                            <div id="stat-trend" class="font-bold">-</div>
+                        </div>
+                    </div>
 
-        function setIdx(val) {
-            activeIdx = val;
-            document.getElementById('selected-index').textContent = val;
-            document.getElementById('m-id-tag').textContent = val.split(' ').map(s => s[0]).join(''); 
-            toggleDrop('indices');
-            DerivSocket.connect(val.includes('10') ? 'R_10' : val.includes('25') ? 'R_25' : 'R_100');
-        }
+                    <div class="mt-3 pt-2 border-t border-white/20 flex items-center justify-between text-xs">
+                        <span id="signal-timestamp" class="text-blue-200">Generated: --:--:--</span>
+                        <button onclick="refreshSignal()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        function setTrade(val) {
-            activeTrade = val;
-            document.getElementById('selected-trade').textContent = val;
-            toggleDrop('trades');
-        }
+            <div class="px-4 mt-3">
+                <div class="text-xs text-gray-500 mb-2 font-semibold">Digit Distribution</div>
+                <div class="grid grid-cols-5 gap-2" id="digit-grid-top"></div>
+                <div class="grid grid-cols-5 gap-2 mt-2" id="digit-grid-bottom"></div>
+            </div>
 
-        function triggerAnalysis() {
-            const history = DerivSocket.getHistory();
-            if (history.length < 10) return;
-            const counts = new Array(10).fill(0);
-            history.forEach(d => counts[d]++);
-            document.getElementById('res-digit').textContent = counts.indexOf(Math.min(...counts));
-            document.getElementById('prediction-ui').classList.remove('hidden');
-        }
+            <div id="analysis-status" class="flex items-center justify-center gap-2 mt-4 text-gray-500">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+                <span class="text-sm italic">Ready with 45-tick instant buffer</span>
+            </div>
 
-        // INIT
-        document.getElementById('indices-list').innerHTML = ['Volatility 10 Index', 'Volatility 25 Index', 'Volatility 50 Index', 'Volatility 75 Index', 'Volatility 100 Index'].map(k => `<button onclick="setIdx('${k}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${k}</button>`).join('');
-        document.getElementById('trades-list').innerHTML = tradeTypes.map(t => `<button onclick="setTrade('${t}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-50 text-sm font-bold text-gray-700">${t}</button>`).join('');
-        
-        DerivSocket.connect('R_10');
-    </script>
-</body>
-</html>
+            <div class="px-4 mt-5 space-y-3">
+                <button onclick="generateStableSignal()" id="run-btn" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5"></i>
+                    Generate Signal
+                </button>
+                <button onclick="goToStrategies()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-gray-200 hover:bg-gray-300 text-gra
