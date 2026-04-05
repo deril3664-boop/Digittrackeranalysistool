@@ -3,120 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AimagicsPro - Universal Terminal</title>
+    <title>AimagicsPro - Binary Options</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        /* Responsive Container for Mac, Laptop, and Phone */
-        .app-container {
-            width: 100%;
-            max-width: 450px; /* Perfect for desktop viewing */
-            height: 90vh;
-            max-height: 850px;
-            background: #f9fafb;
-            border-radius: 2rem;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        @media (max-width: 640px) {
-            .app-container {
-                height: 100vh;
-                max-height: none;
-                border-radius: 0;
-            }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #000; }
         @keyframes pulse-ring {
             0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
         }
         .prediction-pulse { animation: pulse-ring 1.5s infinite; }
-        .dropdown-enter { animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .dropdown-enter { animation: dropdown-in 0.15s ease-out; }
         @keyframes dropdown-in {
-            from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+            from { opacity: 0; transform: translateY(-10px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
     </style>
 </head>
-<body>
+<body class="bg-black min-h-screen flex items-center justify-center p-4">
     
-    <div class="app-container">
-        <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shadow-xl z-10">
-            <div>
-                <h1 class="text-xl font-black tracking-tighter text-blue-400">AIMAGICSPRO</h1>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Universal Trading Engine</p>
-            </div>
-            <div class="bg-blue-500/10 p-2 rounded-lg">
-                <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
+    <div class="w-full max-w-sm bg-gray-50 min-h-[800px] rounded-3xl overflow-hidden shadow-2xl relative">
+        
+        <header class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md">
+            <h1 class="text-lg font-semibold tracking-wide">AimagicsPro</h1>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">CapCut</span>
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/>
+                </svg>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-5">
-            
-            <div id="screen-indices" class="space-y-6">
-                <h2 class="text-2xl font-black text-slate-800">Select Market</h2>
-                <div class="relative">
-                    <button onclick="toggleDropdown('indices')" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between hover:border-blue-400 transition-colors shadow-sm">
-                        <span id="selected-index" class="font-bold text-slate-700">10 index</span>
-                        <i data-lucide="chevron-down" id="indices-chevron" class="text-slate-400"></i>
-                    </button>
-                    <div id="indices-dropdown" class="hidden absolute w-full mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-slate-100 dropdown-enter overflow-hidden">
-                        <div class="max-h-[350px] overflow-y-auto" id="indices-list"></div>
-                    </div>
-                </div>
-                <button onclick="goToTradeType()" class="w-full py-5 rounded-2xl font-black text-lg bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">NEXT STEP</button>
+        <div class="mx-4 mt-4 mb-6">
+            <div class="bg-cyan-50 border border-cyan-200 rounded-lg py-2.5 px-4 text-center">
+                <p class="text-cyan-700 text-sm font-semibold tracking-wide uppercase">
+                    Welcome Amos to Binary Option
+                </p>
             </div>
+        </div>
 
-            <div id="screen-tradeType" class="hidden space-y-6">
-                <h2 class="text-2xl font-black text-slate-800">Trade Logic</h2>
-                <div class="relative">
-                    <button onclick="toggleDropdown('tradeType')" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 px-5 text-left flex items-center justify-between hover:border-blue-400 transition-colors shadow-sm">
-                        <span id="selected-trade" class="font-bold text-slate-700">Over</span>
-                        <i data-lucide="chevron-down" id="tradeType-chevron" class="text-slate-400"></i>
-                    </button>
-                    <div id="tradeType-dropdown" class="hidden absolute w-full mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-slate-100 dropdown-enter">
-                        <div id="tradeType-list"></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button onclick="goToIndices()" class="py-5 rounded-2xl font-bold bg-slate-200 text-slate-600 active:scale-95 transition-all">BACK</button>
-                    <button onclick="goToAnalysis()" class="py-5 rounded-2xl font-black bg-blue-600 text-white shadow-lg active:scale-95 transition-all">ANALYZE</button>
+        <div id="screen-indices" class="px-4 pb-6">
+            <div class="mb-4">
+                <label class="block text-gray-900 text-xl font-bold mb-3">Binary Indices</label>
+                <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between">
+                    <span id="selected-index" class="text-gray-800 font-medium">10 index</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500" id="indices-chevron"></i>
+                </button>
+                <div id="indices-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200 dropdown-enter overflow-hidden">
+                    <div class="max-h-80 overflow-y-auto" id="indices-list"></div>
                 </div>
             </div>
+            <div class="space-y-3 mt-8">
+                <button onclick="goToTradeType()" class="w-full py-4 rounded-xl font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-lg active:scale-95 transition-all">Next</button>
+            </div>
+        </div>
 
-            <div id="screen-analysis" class="hidden space-y-8">
-                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                    <div class="grid grid-cols-5 gap-2" id="digit-grid"></div>
-                </div>
-
-                <div id="prediction-container" class="flex flex-col items-center py-4">
-                    <div class="relative">
-                        <div class="w-32 h-32 rounded-full border-[6px] border-blue-500 flex items-center justify-center bg-white prediction-pulse shadow-2xl">
-                            <span id="final-recommendation" class="font-black text-blue-700 tracking-tighter">-</span>
-                        </div>
-                        <div class="absolute -bottom-2 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg uppercase">Confirmed</div>
-                    </div>
-                    <p id="confidence-text" class="text-blue-500 mt-6 font-black tracking-[0.2em] text-[11px]"></p>
-                </div>
-
-                <div class="space-y-3">
-                    <button onclick="startAnalysis()" id="run-btn" class="w-full py-5 rounded-2xl font-black text-lg bg-blue-600 text-white shadow-xl active:scale-95 transition-all">REFRESH SIGNAL</button>
-                    <button onclick="goToTradeType()" class="w-full py-4 font-bold text-slate-400 hover:text-slate-600">Modify Selection</button>
+        <div id="screen-tradeType" class="hidden px-4 pb-6">
+            <div class="mb-4">
+                <label class="block text-gray-900 text-xl font-bold mb-3">Trade Type</label>
+                <button onclick="toggleDropdown('tradeType')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between">
+                    <span id="selected-trade" class="text-gray-800 font-medium">Over</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500" id="tradeType-chevron"></i>
+                </button>
+                <div id="tradeType-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 border border-gray-200 dropdown-enter">
+                    <div id="tradeType-list"></div>
                 </div>
             </div>
-        </main>
+            <div class="space-y-3 mt-8">
+                <button onclick="goToAnalysis()" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Next</button>
+                <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95 transition-all">Back</button>
+            </div>
+        </div>
+
+        <div id="screen-analysis" class="hidden">
+            <div class="px-4 mt-2">
+                <div class="grid grid-cols-5 gap-2" id="digit-grid-top"></div>
+                <div class="grid grid-cols-5 gap-2 mt-2" id="digit-grid-bottom"></div>
+            </div>
+
+            <div id="prediction-container" class="hidden mt-8 flex flex-col items-center">
+                <div class="w-24 h-24 rounded-full border-4 border-blue-500 flex items-center justify-center bg-white prediction-pulse shadow-lg">
+                    <span id="final-recommendation" class="font-bold text-blue-700 tracking-tight">-</span>
+                </div>
+                <p id="confidence-text" class="text-[10px] text-blue-500 mt-3 font-bold uppercase tracking-widest"></p>
+            </div>
+
+            <div class="px-4 mt-10 space-y-3">
+                <button onclick="startAnalysis()" id="run-btn" class="w-full py-4 rounded-xl font-bold bg-blue-500 text-white shadow-lg active:scale-95 transition-all">Run Analysis</button>
+                <button onclick="goToTradeType()" class="w-full py-4 rounded-xl font-bold bg-gray-400 text-white active:scale-95 transition-all">Back</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -125,38 +102,31 @@
         // --- INSTANT TRADING ENGINE ---
         const TradingEngine = (function() {
             let instance;
-            let tickBuffer = [];
-            
             return {
                 getInstance: function() {
                     if (!instance) {
                         instance = {
-                            // NEW: Pre-fills buffer instantly for immediate display
-                            warmUp: function() {
-                                tickBuffer = Array.from({length: 50}, () => Math.floor(Math.random() * 10));
-                            },
                             analyze: function(tradeType) {
-                                // Add one real-time tick to the buffer
-                                tickBuffer.push(Math.floor(Math.random() * 10));
-                                tickBuffer.shift();
-
+                                // Instant 50-tick buffer simulation for immediate display
+                                const buffer = Array.from({length: 50}, () => Math.floor(Math.random() * 10));
                                 const counts = new Array(10).fill(0);
-                                tickBuffer.forEach(d => counts[d]++);
-                                const probs = counts.map(c => (c / tickBuffer.length) * 100);
+                                buffer.forEach(d => counts[d]++);
+                                const probs = counts.map(c => (c / buffer.length) * 100);
                                 const sorted = [...probs].sort((a,b)=>b-a);
 
-                                let signal = "";
-                                if (tradeType === 'Matches' || tradeType === 'Differs') {
-                                    signal = probs.indexOf(sorted[0]).toString();
-                                } else if (tradeType === 'Over' || tradeType === 'Under') {
-                                    signal = tradeType === 'Over' ? "5" : "4";
-                                } else if (tradeType === 'Even/Odd') {
-                                    signal = (probs.filter((_,i)=>i%2===0).reduce((a,b)=>a+b,0) > 50) ? "EVEN" : "ODD";
-                                } else if (tradeType === 'Rise/Fall') {
-                                    signal = tickBuffer[49] > tickBuffer[48] ? "RISE" : "FALL";
+                                let resultText = "";
+                                const isNumeric = ['Over','Under','Matches','Differs'].includes(tradeType);
+
+                                if (isNumeric) {
+                                    // FIGURE OUTPUT
+                                    resultText = buffer[buffer.length - 1].toString();
+                                } else {
+                                    // WORD OUTPUT
+                                    if (tradeType === 'Even/Odd') resultText = Math.random() > 0.5 ? "EVEN" : "ODD";
+                                    else resultText = Math.random() > 0.5 ? "RISE" : "FALL";
                                 }
 
-                                return { rec: signal, conf: Math.round(sorted[0]), allProbs: probs };
+                                return { rec: resultText, conf: Math.round(sorted[0]), probs: probs, isNum: isNumeric };
                             }
                         };
                     }
@@ -165,58 +135,50 @@
             };
         })();
 
-        // --- UI LOGIC ---
-        const markets = ['10','10 (1s)','25','25 (1s)','50','50 (1s)','75','75 (1s)','100','100 (1s)'].map(v => v + ' index');
-        const types = ['Over','Under','Matches','Differs','Even/Odd','Rise/Fall'];
+        // --- DATA & UI LOGIC ---
+        const indices = ['10','10 (1s)','25','25 (1s)','50','50 (1s)','75','75 (1s)','100','100 (1s)'].map(v => v + ' index');
+        const trades = ['Over','Under','Matches','Differs','Even/Odd','Rise/Fall'];
         let selectedIndex = '10 index', selectedTradeType = 'Over';
 
-        function populateDropdowns() {
-            document.getElementById('indices-list').innerHTML = markets.map(m => `<button onclick="selectIndex('${m}')" class="w-full text-left py-4 px-6 hover:bg-blue-50 border-b border-slate-50 text-sm font-bold text-slate-600">${m}</button>`).join('');
-            document.getElementById('tradeType-list').innerHTML = types.map(t => `<button onclick="selectTradeType('${t}')" class="w-full text-left py-4 px-6 hover:bg-blue-50 border-b border-slate-50 text-sm font-bold text-slate-600">${t}</button>`).join('');
+        function populate() {
+            document.getElementById('indices-list').innerHTML = indices.map(i => `<button onclick="setIdx('${i}')" class="w-full text-left py-4 px-4 hover:bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-700">${i}</button>`).join('');
+            document.getElementById('tradeType-list').innerHTML = trades.map(t => `<button onclick="setTrade('${t}')" class="w-full text-left py-4 px-4 hover:bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-700">${t}</button>`).join('');
         }
 
+        function setIdx(v) { selectedIndex = v; document.getElementById('selected-index').textContent = v; toggleDropdown('indices'); }
+        function setTrade(v) { selectedTradeType = v; document.getElementById('selected-trade').textContent = v; toggleDropdown('tradeType'); }
         function toggleDropdown(id) { document.getElementById(`${id}-dropdown`).classList.toggle('hidden'); }
-        function selectIndex(v) { selectedIndex = v; document.getElementById('selected-index').textContent = v; toggleDropdown('indices'); }
-        function selectTradeType(v) { selectedTradeType = v; document.getElementById('selected-trade').textContent = v; toggleDropdown('tradeType'); }
 
         function toggleScreen(id) {
             ['screen-indices','screen-tradeType','screen-analysis'].forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
+
         function goToTradeType() { toggleScreen('screen-tradeType'); }
         function goToIndices() { toggleScreen('screen-indices'); }
-        function goToAnalysis() { 
-            toggleScreen('screen-analysis'); 
-            startAnalysis(); // Immediate run upon entering screen
+        function goToAnalysis() { toggleScreen('screen-analysis'); initDigitGrid(); }
+
+        function initDigitGrid(probs = new Array(10).fill(0)) {
+            const card = (d, p) => `<div class="bg-white rounded-xl p-3 flex flex-col items-center justify-center border-2 border-gray-200 shadow-sm"><span class="text-xl font-bold text-gray-800">${d}</span><span class="text-[10px] mt-1 text-blue-500 font-bold">${p.toFixed(1)}%</span></div>`;
+            document.getElementById('digit-grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, probs[i])).join('');
+            document.getElementById('digit-grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, probs[i])).join('');
         }
 
         function startAnalysis() {
-            const engine = TradingEngine.getInstance();
-            engine.warmUp(); // INSTANT FILL
+            const res = TradingEngine.getInstance().analyze(selectedTradeType);
+            initDigitGrid(res.probs);
             
-            const result = engine.analyze(selectedTradeType);
-            
-            // 1. Update Grid
-            document.getElementById('digit-grid').innerHTML = result.allProbs.map((p, i) => `
-                <div class="flex flex-col items-center py-2 border-r last:border-0 border-slate-100">
-                    <span class="text-xs font-black text-slate-400">${i}</span>
-                    <span class="text-[10px] font-bold text-blue-600">${Math.round(p)}%</span>
-                </div>
-            `).join('');
-
-            // 2. Immediate Signal Display
             const recEl = document.getElementById('final-recommendation');
-            recEl.textContent = result.rec;
+            recEl.textContent = res.rec;
             
-            // Formatting: Words (2xl) vs Figures (6xl)
-            const isWord = isNaN(result.rec);
-            recEl.className = `font-black text-blue-700 leading-none ${isWord ? 'text-3xl uppercase' : 'text-7xl'}`;
-
-            document.getElementById('confidence-text').textContent = `STABILITY: ${result.conf}%`;
+            // UI Formatting: Words (text-xl) vs Figures (text-5xl)
+            recEl.className = `font-black text-blue-700 leading-none ${res.isNum ? 'text-5xl' : 'text-xl'}`;
+            
+            document.getElementById('confidence-text').textContent = `Dominance: ${res.conf}%`;
             document.getElementById('prediction-container').classList.remove('hidden');
         }
 
-        populateDropdowns();
+        populate();
     </script>
 </body>
 </html>
