@@ -536,7 +536,125 @@
             <!-- Sync Indicator -->
             <div id="sync-indicator" class="sync-indicator">
                 <div class="sync-spinner"></div>
-                <div class="text-cyan-400 text-sm font-bold">Syncing 50 ticks...</div>
+                <div class="text-cyan-400 text-sm font-bold">Syncing 50 ticks...</div><script>
+// --- GLOBAL STATE ---
+let ws = null;
+let heartbeatInterval = null;
+let reconnectTimeout = null;
+let tickHistory = [];
+
+// --- WEBSOCKET ENGINE ---
+function connectWS() {
+    const symbol = document.getElementById('index-select').value;
+    
+    // KILL SWITCH: Clean old connections to prevent memory lag
+    if (ws) {
+        console.log("Cleaning old connection...");
+        ws.onopen = ws.onclose = ws.onmessage = ws.onerror = null;
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+        }
+    }
+    clearInterval(heartbeatInterval);
+    clearTimeout(reconnectTimeout);
+
+    // START NEW CONNECTION (Using your App ID)
+    const wsUrl = `wss://ws.binaryws.com/websockets/v3?app_id=131595`;
+    ws = new WebSocket(wsUrl);
+
+    const dot = document.getElementById('ws-dot');
+    const txt = document.getElementById('ws-text');
+    const syncIndicator = document.getElementById('sync-indicator');
+
+    ws.onopen = () => {
+        dot.className = "ws-dot connected";
+        txt.innerText = "Connected - Analyzing";
+        if(syncIndicator) syncIndicator.style.display = 'block';
+
+        // 1. INSTANT SYNC: Request 50 ticks from history immediately
+        ws.send(JSON.stringify({ 
+            "ticks_history": symbol, 
+            "count": 50, 
+            "end": "latest", 
+            "style": "ticks" 
+        }));
+
+        // 2. LIVE STREAM: Subscribe to every new tick
+        ws.send(JSON.stringify({ 
+            "ticks": symbol, 
+            "subscribe": 1 
+        }));
+
+        // 3. VERCEL HEARTBEAT: Keeps connection alive every 20s
+        heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ ping: 1 }));
+            }
+        }, 20000);
+    };
+
+    ws.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+
+        // Handle the 50-tick history (Fixes the "Static" start)
+        if (data.msg_type === 'history') {
+            if(syncIndicator) syncIndicator.style.display = 'none';
+            const prices = data.history.prices;
+            tickHistory = prices.map(p => parseFloat(p).toFixed(2));
+            updateAnalysis(); // Run your strategy immediately
+        }
+
+        // Handle live ticks
+        if (data.tick) {
+            const quote = parseFloat(data.tick.quote).toFixed(2);
+            tickHistory.push(quote);
+            if (tickHistory.length > 100) tickHistory.shift(); // Keep buffer clean
+            updateAnalysis();
+            showTickPulse(); // Visual feedback
+        }
+    };
+
+    ws.onclose = () => {
+        dot.className = "ws-dot disconnected";
+        txt.innerText = "Connection Lost - Reconnecting...";
+        clearInterval(heartbeatInterval);
+        // Auto-reconnect after 5 seconds
+        reconnectTimeout = setTimeout(connectWS, 5000);
+    };
+
+    ws.onerror = (err) => {
+        console.error("WS Error:", err);
+        ws.close();
+    };
+}
+
+// Visual feedback function
+function showTickPulse() {
+    const indicator = document.createElement('div');
+    indicator.className = 'tick-indicator';
+    document.body.appendChild(indicator);
+    setTimeout(() => indicator.remove(), 500);
+}
+
+// Initial switch function
+function toggleWS() {
+    const btn = document.getElementById('ws-btn');
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+        btn.innerText = "Connect";
+    } else {
+        connectWS();
+        btn.innerText = "Disconnect";
+    }
+}
+
+// Navigation helper
+function goTo(screenNum) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`screen-${screenNum}`).classList.add('active');
+}
+                </script>
+                
             </div>
 
             <!-- Main Signal Display Box (320px) -->
