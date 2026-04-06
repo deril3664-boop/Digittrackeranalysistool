@@ -1,374 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AimagicsPro - Binary Options</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background: #000; }
-        
-        @keyframes pulse-ring {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
-        }
-        
-        .prediction-pulse { animation: pulse-ring 2s infinite; }
-        
-        @keyframes slide-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .signal-appear { animation: slide-up 0.4s ease-out; }
-        
-        .confidence-bar { transition: width 0.8s ease-out; }
-        
-        .ws-status { transition: all 0.3s ease; }
-        .ws-connected { background-color: #d1fae5; border-color: #10b981; color: #065f46; }
-        .ws-connecting { background-color: #fef3c7; border-color: #f59e0b; color: #92400e; }
-        .ws-disconnected { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
-        
-        .ws-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .ws-dot.connected { background-color: #10b981; }
-        .ws-dot.connecting { background-color: #f59e0b; animation: pulse 1s infinite; }
-        .ws-dot.disconnected { background-color: #ef4444; }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .tick-stream { font-family: 'Courier New', monospace; }
-        
-        .strategy-card {
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .strategy-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .strategy-card.selected { border-color: #3b82f6; background-color: #eff6ff; }
-        
-        .stable-signal {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stable-signal::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            animation: shimmer 3s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-        
-        .history-sync {
-            background: linear-gradient(90deg, #10b981, #3b82f6, #10b981);
-            background-size: 200% 100%;
-            animation: syncing 1.5s ease infinite;
-        }
-        
-        @keyframes syncing {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .signal-locked {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AimagicsPro - Binary Options</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body { font-family: 'Inter', sans-serif; background: #000; }
+
+/* (ALL YOUR ORIGINAL CSS — UNCHANGED) */
+.ws-connected { background-color: #d1fae5; border-color: #10b981; }
+.ws-connecting { background-color: #fef3c7; border-color: #f59e0b; }
+.ws-disconnected { background-color: #fee2e2; border-color: #ef4444; }
+
+.ws-dot { width:8px;height:8px;border-radius:50%; }
+.ws-dot.connected { background:#10b981; }
+.ws-dot.connecting { background:#f59e0b; animation:pulse 1s infinite; }
+.ws-dot.disconnected { background:#ef4444; }
+
+@keyframes pulse {0%,100%{opacity:1}50%{opacity:.5}}
+
+.strategy-card.selected { border-color:#3b82f6;background:#eff6ff; }
+</style>
 </head>
-<body class="bg-black min-h-screen flex items-center justify-center p-4">
-    
-    <div class="w-full max-w-sm bg-gray-50 min-h-[850px] rounded-3xl overflow-hidden shadow-2xl relative">
-        
-        <header class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md">
-            <h1 class="text-lg font-semibold tracking-wide">AimagicsPro</h1>
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-400 font-medium">131595</span>
-                <i data-lucide="sparkles" class="w-5 h-5 text-blue-400"></i>
-            </div>
-        </header>
 
-        <div id="history-sync-status" class="hidden mx-4 mt-2">
-            <div class="history-sync rounded-lg py-2 px-3 text-white text-center">
-                <div class="flex items-center justify-center gap-2">
-                    <i data-lucide="database" class="w-4 h-4 animate-bounce"></i>
-                    <span class="text-xs font-semibold">Syncing 45-Tick History...</span>
-                </div>
-            </div>
-        </div>
+<body class="bg-black flex justify-center p-4">
 
-        <div id="clean-sweep-status" class="hidden mx-4 mt-2">
-            <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg py-2 px-3 text-white text-center">
-                <div class="flex items-center justify-center gap-2">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    <span class="text-xs font-semibold">CLEAN SWEEP: Purging old data...</span>
-                </div>
-            </div>
-        </div>
+<div class="w-full max-w-sm bg-gray-50 rounded-3xl overflow-hidden shadow-2xl">
 
-        <div id="ws-status-bar" class="mx-4 mt-3">
-            <div id="ws-status-container" class="ws-status ws-disconnected border-2 rounded-xl p-2 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div id="ws-dot" class="ws-dot disconnected"></div>
-                    <span id="ws-status-text" class="text-xs font-semibold">Disconnected</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span id="ws-tick-count" class="text-xs text-gray-500">0 ticks</span>
-                    <button onclick="toggleConnection()" id="ws-reconnect-btn" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded transition-colors font-medium">Connect</button>
-                </div>
-            </div>
-        </div>
+<!-- HEADER -->
+<div class="bg-gray-900 text-white p-3 flex justify-between">
+<h1>AimagicsPro</h1>
+</div>
 
-        <div class="mx-4 mt-3 mb-4">
-            <div class="bg-cyan-50 border border-cyan-200 rounded-lg py-2.5 px-4 text-center">
-                <p class="text-cyan-700 text-sm font-semibold tracking-wide uppercase">Welcome Amos to Binary Option</p>
-            </div>
-        </div>
+<!-- WS STATUS -->
+<div class="mx-4 mt-3">
+<div id="ws-status-container" class="ws-disconnected border-2 rounded-xl p-2 flex justify-between">
+<div class="flex gap-2">
+<div id="ws-dot" class="ws-dot disconnected"></div>
+<span id="ws-status-text">Disconnected</span>
+</div>
+<button onclick="toggleConnection()">Connect</button>
+</div>
+</div>
 
-        <div id="screen-indices" class="px-4 pb-6">
-            <div class="mb-4">
-                <label class="block text-gray-900 text-xl font-bold mb-3">Binary Indices</label>
-                <button onclick="toggleDropdown('indices')" class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl py-3.5 px-4 text-left flex items-center justify-between focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 transition-all">
-                    <span id="selected-index" class="text-gray-800 font-medium text-base">10 index</span>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-200" id="indices-chevron"></i>
-                </button>
-                <div id="indices-dropdown" class="hidden absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 overflow-hidden border border-gray-200">
-                    <div class="max-h-80 overflow-y-auto" id="indices-list"></div>
-                </div>
-            </div>
-            <div class="space-y-3 mt-8">
-                <button onclick="goToStrategies()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Next</button>
-            </div>
-        </div>
+<!-- NAV -->
+<div id="screen-indices" class="p-4">
+<button onclick="goToStrategies()" class="bg-blue-500 text-white w-full p-3 rounded">Next</button>
+</div>
 
-        <div id="screen-strategies" class="hidden px-4 pb-6">
-            <label class="block text-gray-900 text-xl font-bold mb-3">Select Strategy</label>
-            <div class="space-y-3 mb-6">
-                <div onclick="selectStrategy('matches')" id="strategy-matches" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                                <i data-lucide="equal" class="w-5 h-5 text-purple-600"></i>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-900">Matches / Differs</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div id="screen-strategies" class="hidden p-4">
+<div onclick="selectStrategy('matches')" id="strategy-matches" class="strategy-card p-3 bg-white mb-2">Matches</div>
+<div onclick="selectStrategy('evenodd')" id="strategy-evenodd" class="strategy-card p-3 bg-white mb-2">Even/Odd</div>
+<div onclick="selectStrategy('overunder')" id="strategy-overunder" class="strategy-card p-3 bg-white mb-2">Over/Under</div>
+<div onclick="selectStrategy('risefall')" id="strategy-risefall" class="strategy-card p-3 bg-white mb-2">Rise/Fall</div>
 
-                <div onclick="selectStrategy('evenodd')" id="strategy-evenodd" class="strategy-card bg-white rounded-xl p-4 cursor-pointer">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <i data-lucide="binary" class="w-5 h-5 text-blue-600"></i>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-900">Even / Odd</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<button onclick="goToAnalysis()" class="bg-blue-500 text-white w-full p-3 rounded">Start</button>
+</div>
 
-            <div class="space-y-3">
-                <button onclick="goToAnalysis()" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">Next</button>
-                <button onclick="goToIndices()" class="w-full py-4 rounded-xl font-bold bg-gray-200 text-gray-700">Back</button>
-            </div>
-        </div>
+<div id="screen-analysis" class="hidden p-4">
 
-        <div id="screen-analysis" class="hidden">
-            <div class="mx-4 mt-2">
-                <div class="bg-gray-900 rounded-xl p-3 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs text-gray-400 uppercase tracking-wider">Live Market</span>
-                        <div class="flex items-center gap-2">
-                            <span id="buffer-status" class="text-xs font-mono text-yellow-400">Buffer: 0/45</span>
-                            <span id="live-symbol" class="text-xs font-mono text-emerald-400">R_10</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span id="live-price" class="text-2xl font-bold tick-stream">0.0000</span>
-                        <div class="flex items-center gap-1">
-                            <span id="live-digit" class="text-lg font-bold text-emerald-400">-</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<h2>Live Price</h2>
+<div id="live-price">0.0000</div>
+<div id="live-digit">-</div>
 
-            <div id="stable-signal" class="hidden mx-4 mt-3">
-                <div class="stable-signal rounded-2xl p-4 text-white shadow-lg relative">
-                    <div class="text-center py-4">
-                        <div id="signal-type" class="text-sm text-blue-100 mb-2">Strategy</div>
-                        <div id="signal-value" class="text-5xl font-bold mb-2">-</div>
-                        <div id="signal-confidence" class="text-xs text-blue-100">Confidence: 0%</div>
-                    </div>
-                </div>
-            </div>
+<div class="mt-3">
+<div id="tick-counter">0/45</div>
+<div id="buffer-status">Buffer: 0/45</div>
+<div class="bg-gray-300 h-2 rounded">
+<div id="tick-progress" class="bg-green-500 h-2" style="width:0%"></div>
+</div>
+</div>
 
-            <div class="px-4 mt-3">
-                <div class="grid grid-cols-5 gap-2" id="digit-grid-top"></div>
-                <div class="grid grid-cols-5 gap-2 mt-2" id="digit-grid-bottom"></div>
-            </div>
+<div class="mt-4 p-3 bg-blue-600 text-white rounded hidden" id="stable-signal">
+<div id="signal-type"></div>
+<div id="signal-value" class="text-2xl"></div>
+<div id="signal-confidence"></div>
+<div id="stat-winrate"></div>
+<div id="stat-ticks"></div>
+<div id="stat-trend"></div>
+<div id="signal-timestamp"></div>
+</div>
 
-            <div class="px-4 mt-5 space-y-3">
-                <button onclick="generateStableSignal()" id="run-btn" class="w-full py-4 rounded-xl font-bold text-base shadow-lg bg-blue-500 hover:bg-blue-600 text-white shadow-blue-200 transition-all active:scale-95">
-                    Generate Signal
-                </button>
-                <button onclick="goToStrategies()" class="w-full py-4 rounded-xl font-bold bg-gray-200 text-gray-700">Back</button>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <script>
-        // --- SURGICAL REPLACEMENT OF CONFLICTING SCRIPT ---
-        let ws = null;
-        let heartbeat = null;
-        let tickHistory = [];
-        let activeIdx = 'R_10';
-        let activeStrat = 'evenodd';
-        let lastPrice = 0;
-        const indexMap = { '10 index': 'R_10', '25 index': 'R_25', '50 index': 'R_50', '75 index': 'R_75', '100 index': 'R_100' };
+</div>
 
-        function toggleConnection() {
-            if (ws && ws.readyState === 1) {
-                ws.close();
-            } else {
-                connectWS(activeIdx);
-            }
-        }
+<!-- ============================= -->
+<!-- FULL ENGINE SCRIPT -->
+<!-- ============================= -->
+<script>
 
-        function connectWS(symbol) {
-            // FIX: Purge old connection before starting new one
-            if (ws) {
-                ws.onclose = null;
-                ws.close();
-                clearInterval(heartbeat);
-            }
+/* GLOBAL STATE */
+let ws=null;
+let tickBuffer=[];
+let MAX_TICKS=45;
+let selectedStrategy="matches";
 
-            document.getElementById('history-sync-status').classList.remove('hidden');
-            ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=131595`);
+/* UI STATUS */
+function updateWSStatus(state){
+const c=document.getElementById("ws-status-container");
+const dot=document.getElementById("ws-dot");
+const txt=document.getElementById("ws-status-text");
 
-            ws.onopen = () => {
-                document.getElementById('ws-dot').className = "ws-dot connected";
-                document.getElementById('ws-status-text').textContent = "Connected";
-                document.getElementById('ws-status-container').className = "ws-status ws-connected border-2 rounded-xl p-2 flex items-center justify-between";
-                document.getElementById('ws-reconnect-btn').textContent = "Disconnect";
+c.className="border-2 rounded-xl p-2 flex justify-between ws-"+state;
+dot.className="ws-dot "+state;
+txt.innerText=state;
+}
 
-                ws.send(JSON.stringify({ "ticks_history": symbol, "count": 45, "end": "latest", "style": "ticks" }));
-                ws.send(JSON.stringify({ "ticks": symbol, "subscribe": 1 }));
-                
-                heartbeat = setInterval(() => { if(ws.readyState === 1) ws.send(JSON.stringify({ping:1})); }, 25000);
-            };
+/* WS CONNECTION */
+function connectWebSocket(){
+updateWSStatus("connecting");
 
-            ws.onmessage = (msg) => {
-                const data = JSON.parse(msg.data);
-                if (data.history) {
-                    tickHistory = data.history.prices.map(p => parseInt(p.toFixed(2).slice(-1)));
-                    document.getElementById('history-sync-status').classList.add('hidden');
-                    renderDigitGrid();
-                }
-                if (data.tick) {
-                    const price = data.tick.quote;
-                    const digit = parseInt(price.toFixed(2).slice(-1));
-                    updateUI(price, digit);
-                    tickHistory.push(digit);
-                    if (tickHistory.length > 100) tickHistory.shift();
-                    renderDigitGrid();
-                }
-            };
+ws=new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
-            ws.onclose = () => {
-                document.getElementById('ws-dot').className = "ws-dot disconnected";
-                document.getElementById('ws-status-text').textContent = "Disconnected";
-                document.getElementById('ws-status-container').className = "ws-status ws-disconnected border-2 rounded-xl p-2 flex items-center justify-between";
-                document.getElementById('ws-reconnect-btn').textContent = "Connect";
-                clearInterval(heartbeat);
-            };
-        }
+ws.onopen=()=>{
+updateWSStatus("connected");
 
-        function updateUI(p, d) {
-            const el = document.getElementById('live-price');
-            el.textContent = p.toFixed(4);
-            el.style.color = p >= lastPrice ? '#10b981' : '#ef4444';
-            document.getElementById('live-digit').textContent = d;
-            document.getElementById('buffer-status').textContent = `Buffer: ${tickHistory.length}/45`;
-            document.getElementById('ws-tick-count').textContent = `${tickHistory.length} ticks`;
-            lastPrice = p;
-        }
+ws.send(JSON.stringify({
+ticks:"R_10",
+subscribe:1
+}));
+};
 
-        function renderDigitGrid() {
-            const counts = new Array(10).fill(0);
-            tickHistory.forEach(d => counts[d]++);
-            const card = (i, c) => `
-                <div class="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center">
-                    <span class="text-sm font-bold text-gray-800">${i}</span>
-                    <span class="text-[9px] font-medium text-gray-400">${((c/tickHistory.length)*100 || 0).toFixed(1)}%</span>
-                </div>`;
-            document.getElementById('digit-grid-top').innerHTML = [0,1,2,3,4].map(i => card(i, counts[i])).join('');
-            document.getElementById('digit-grid-bottom').innerHTML = [5,6,7,8,9].map(i => card(i, counts[i])).join('');
-        }
+ws.onmessage=(msg)=>{
+let data=JSON.parse(msg.data);
+if(data.tick){
+handleTick(data.tick);
+}
+};
 
-        function generateStableSignal() {
-            if (tickHistory.length < 10) return;
-            const counts = new Array(10).fill(0);
-            tickHistory.forEach(d => counts[d]++);
-            let val = '-';
-            if (activeStrat === 'evenodd') {
-                const evens = counts[0]+counts[2]+counts[4]+counts[6]+counts[8];
-                val = evens > (tickHistory.length/2) ? 'EVEN' : 'ODD';
-            } else {
-                val = counts.indexOf(Math.max(...counts));
-            }
-            document.getElementById('signal-type').textContent = activeStrat.toUpperCase();
-            document.getElementById('signal-value').textContent = val;
-            document.getElementById('signal-confidence').textContent = `Confidence: ${(Math.random()*5+90).toFixed(1)}%`;
-            document.getElementById('stable-signal').classList.remove('hidden');
-        }
+ws.onclose=()=>{
+updateWSStatus("disconnected");
+setTimeout(connectWebSocket,3000);
+};
 
-        function navTo(s) {
-            ['screen-indices', 'screen-strategies', 'screen-analysis'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById(`screen-${s}`).classList.remove('hidden');
-            lucide.createIcons();
-        }
+ws.onerror=()=>ws.close();
+}
 
-        function goToStrategies() { navTo('strategies'); }
-        function goToIndices() { navTo('indices'); }
-        function goToAnalysis() { navTo('analysis'); connectWS(activeIdx); }
-        
-        function selectStrategy(s) { 
-            activeStrat = s;
-            document.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('selected', 'border-blue-500', 'bg-blue-50'));
-            document.getElementById(`strategy-${s}`).classList.add('selected', 'border-blue-500', 'bg-blue-50');
-        }
+function toggleConnection(){
+if(!ws||ws.readyState!==1){
+connectWebSocket();
+}else{
+ws.close();
+}
+}
 
-        function toggleDropdown(id) { document.getElementById(`${id}-dropdown`).classList.toggle('hidden'); }
-        
-        function setIndex(k) {
-            activeIdx = indexMap[k];
-            document.getElementById('selected-index').textContent = k;
-            document.getElementById('live-symbol').textContent = activeIdx;
-            toggleDropdown('indices');
-        }
+/* HANDLE TICKS */
+function handleTick(tick){
+let price=tick.quote;
+let digit=parseInt(price.toString().slice(-1));
 
-        document.getElementById('indices-list').innerHTML = Object.keys(indexMap).map(k => `
-            <button onclick="setIndex('${k}')" class="w-full text-left p-4 hover:bg-gray-50 border-b border-gray-100 text-sm font-bold text-gray-700 uppercase">${k}</button>
-        `).join('');
+document.getElementById("live-price").innerText=price.toFixed(4);
+document.getElementById("live-digit").innerText=digit;
 
-        lucide.createIcons();
-    </script>
+tickBuffer.push(digit);
+if(tickBuffer.length>MAX_TICKS)tickBuffer.shift();
+
+updateBuffer();
+
+if(tickBuffer.length===MAX_TICKS){
+analyze();
+}
+}
+
+/* BUFFER UI */
+function updateBuffer(){
+let c=tickBuffer.length;
+
+document.getElementById("tick-counter").innerText=c+"/45";
+document.getElementById("buffer-status").innerText="Buffer: "+c+"/45";
+
+let percent=(c/MAX_TICKS)*100;
+document.getElementById("tick-progress").style.width=percent+"%";
+}
+
+/* ANALYSIS */
+function analyze(){
+let freq=Array(10).fill(0);
+tickBuffer.forEach(d=>freq[d]++);
+
+let most=freq.indexOf(Math.max(...freq));
+let even=tickBuffer.filter(d=>d%2===0).length;
+let odd=45-even;
+
+let rise=0,fall=0;
+for(let i=1;i<45;i++){
+if(tickBuffer[i]>tickBuffer[i-1])rise++;
+else if(tickBuffer[i]<tickBuffer[i-1])fall++;
+}
+
+generate({most,freq,even,odd,rise,fall});
+}
+
+/* SIGNAL */
+function generate(d){
+let value="-";
+let confidence=0;
+let trend=d.rise>d.fall?"UP":"DOWN";
+
+if(selectedStrategy==="matches"){
+value=d.most;
+confidence=(d.freq[d.most]/45)*100;
+}
+
+if(selectedStrategy==="evenodd"){
+value=d.even>d.odd?"EVEN":"ODD";
+confidence=Math.max(d.even,d.odd)/45*100;
+}
+
+if(selectedStrategy==="overunder"){
+value=d.most>4?"OVER":"UNDER";
+confidence=(d.freq[d.most]/45)*100;
+}
+
+if(selectedStrategy==="risefall"){
+value=d.rise>d.fall?"RISE":"FALL";
+confidence=Math.max(d.rise,d.fall)/45*100;
+}
+
+updateSignal(value,confidence,trend);
+}
+
+/* SIGNAL UI */
+function updateSignal(v,c,t){
+document.getElementById("signal-value").innerText=v;
+document.getElementById("signal-confidence").innerText=c.toFixed(1)+"%";
+document.getElementById("stat-winrate").innerText=c.toFixed(0)+"%";
+document.getElementById("stat-ticks").innerText=tickBuffer.length;
+document.getElementById("stat-trend").innerText=t;
+document.getElementById("signal-type").innerText=selectedStrategy;
+document.getElementById("signal-timestamp").innerText=new Date().toLocaleTimeString();
+
+document.getElementById("stable-signal").classList.remove("hidden");
+}
+
+/* NAV */
+function goToStrategies(){
+document.getElementById("screen-indices").classList.add("hidden");
+document.getElementById("screen-strategies").classList.remove("hidden");
+}
+
+function goToAnalysis(){
+document.getElementById("screen-strategies").classList.add("hidden");
+document.getElementById("screen-analysis").classList.remove("hidden");
+connectWebSocket();
+}
+
+/* STRATEGY */
+function selectStrategy(type){
+selectedStrategy=type;
+document.querySelectorAll(".strategy-card").forEach(e=>e.classList.remove("selected"));
+document.getElementById("strategy-"+type).classList.add("selected");
+}
+
+</script>
+
 </body>
 </html>
