@@ -150,162 +150,6 @@
             to { box-shadow: 0 0 30px currentColor, 0 0 50px currentColor; }
         }
         
-        /* Countdown Ring */
-        .countdown-ring {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: conic-gradient(currentColor var(--progress), transparent 0);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: white;
-            border: 2px solid rgba(255,255,255,0.2);
-            will-change: background;
-        }
-        
-        .countdown-ring::before {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #000;
-            border-radius: 50%;
-        }
-        
-        .countdown-ring span {
-            position: relative;
-            z-index: 1;
-        }
-        
-        /* Run button */
-        .btn-run {
-            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-            border: none;
-            color: #000;
-            font-weight: 800;
-            letter-spacing: 1px;
-            will-change: transform;
-        }
-        
-        .btn-run.running {
-            background: linear-gradient(135deg, #ff006e 0%, #cc0055 100%);
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
-            color: white;
-        }
-        
-        .btn-run:active {
-            transform: scale(0.97);
-        }
-        
-        /* Digit Grid Cards */
-        .digit-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin: 10px 0;
-        }
-        
-        .digit-card {
-            position: relative;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 12px;
-            padding: 12px 4px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            will-change: transform, box-shadow, border-color;
-        }
-        
-        .digit-card.active {
-            border-color: #00d4ff;
-            background: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-            transform: scale(1.05);
-        }
-        
-        .digit-card.highlight-green {
-            border-color: #22c55e;
-            background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
-            animation: pulse-green 1s infinite alternate;
-        }
-        
-        .digit-card.highlight-red {
-            border-color: #ef4444;
-            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
-            animation: pulse-red 1s infinite alternate;
-        }
-        
-        .digit-card.highlight-blue {
-            border-color: #3b82f6;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-        }
-        
-        .digit-card.highlight-orange {
-            border-color: #f97316;
-            background: linear-gradient(135deg, #7c2d12 0%, #9a3412 100%);
-            box-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
-        }
-        
-        .digit-card.highlight-yellow {
-            border-color: #eab308;
-            background: linear-gradient(135deg, #713f12 0%, #854d0e 100%);
-            box-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
-        }
-        
-        .digit-card.highlight-purple {
-            border-color: #a855f7;
-            background: linear-gradient(135deg, #581c87 0%, #6b21a8 100%);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
-        }
-        
-        @keyframes pulse-green {
-            from { box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-            to { box-shadow: 0 0 25px rgba(34, 197, 94, 0.8); }
-        }
-        
-        @keyframes pulse-red {
-            from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-            to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
-        }
-        
-        /* Triangle indicator */
-        .triangle {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 10px solid #dc2626;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            animation: bounce 0.6s infinite alternate;
-            display: none;
-        }
-        
-        .triangle.show {
-            display: block;
-        }
-        
-        @keyframes bounce {
-            from { transform: translateX(-50%) translateY(0); }
-            to { transform: translateX(-50%) translateY(-5px); }
-        }
-        
         /* WS status dot */
         .ws-dot {
             width: 8px;
@@ -313,76 +157,11 @@
             border-radius: 50%;
         }
         .ws-dot.connected { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-        .ws-dot.connecting { background: #ffaa00; animation: pulse 1s infinite; }
         .ws-dot.disconnected { background: #ff0044; }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* Scrollbar hide */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Confidence Score */
-        .confidence-score {
-            font-size: 48px;
-            font-weight: 800;
-            line-height: 1;
-            margin: 10px 0;
-        }
-        
-        .confidence-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.8;
-        }
-        
-        /* Market Label */
-        .market-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.7;
-            margin-bottom: 5px;
-        }
-        
-        /* Signal Text */
-        .signal-text-main {
-            font-size: 24px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 10px 0;
-        }
-        
-        .signal-subtext {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-        
-        /* Tick indicator */
-        .tick-indicator {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #00ff88;
-            box-shadow: 0 0 5px #00ff88;
-            animation: tick-pulse 0.5s ease-out;
-        }
-        
-        @keyframes tick-pulse {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(3); opacity: 0; }
-        }
-        
+
         /* Sync Indicator */
         .sync-indicator {
             position: fixed;
@@ -402,20 +181,6 @@
             display: block;
             animation: fadeIn 0.2s ease-out;
         }
-        
-        .sync-spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(0, 212, 255, 0.3);
-            border-top-color: #00d4ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -425,7 +190,7 @@
             <h1 class="text-lg font-bold tracking-wider text-cyan-400 neon-text" style="color: #00d4ff;">AIMAGICS<span class="text-white">PRO</span></h1>
             <div class="flex items-center gap-3">
                 <div id="ws-dot" class="ws-dot disconnected"></div>
-                <button onclick="toggleWS()" id="ws-btn" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded border border-gray-600 transition-all">
+                <button onclick="toggleWS()" id="ws-btn" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded border border-gray-600 transition-all text-white">
                     Connect
                 </button>
             </div>
@@ -443,15 +208,7 @@
             <div class="space-y-4 flex-1">
                 <select id="index-select" onchange="state.index=this.value" class="custom-select w-full bg-gray-900 border-2 border-gray-700 rounded-xl py-4 px-4 text-white font-semibold text-lg focus:border-cyan-400 focus:outline-none transition-all">
                     <option value="R_10">Volatility 10 Index</option>
-                    <option value="R_25">Volatility 25 Index</option>
-                    <option value="R_50">Volatility 50 Index</option>
-                    <option value="R_75">Volatility 75 Index</option>
                     <option value="R_100">Volatility 100 Index</option>
-                    <option value="1HZ10V">Volatility 10 (1s)</option>
-                    <option value="1HZ25V">Volatility 25 (1s)</option>
-                    <option value="1HZ50V">Volatility 50 (1s)</option>
-                    <option value="1HZ75V">Volatility 75 (1s)</option>
-                    <option value="1HZ100V">Volatility 100 (1s)</option>
                 </select>
 
                 <div class="mt-8 space-y-3">
@@ -464,49 +221,16 @@
 
         <div id="screen-2" class="screen fade-in">
             <h2 class="text-2xl font-bold text-white mb-2 mt-4">Select Strategy</h2>
-            <p class="text-gray-400 text-sm mb-4">Choose your trading approach</p>
-            
             <div class="strategy-grid flex-1 overflow-y-auto no-scrollbar">
                 <div class="strategy-btn matches" onclick="selectStrategy('matches')" id="btn-matches">
                     <div class="strategy-name">Matches</div>
                     <div class="strategy-desc">Bet on the most frequent digit</div>
                 </div>
-                
                 <div class="strategy-btn differs" onclick="selectStrategy('differs')" id="btn-differs">
                     <div class="strategy-name">Differs</div>
                     <div class="strategy-desc">Bet against the least frequent digit</div>
                 </div>
-                
-                <div class="strategy-btn even" onclick="selectStrategy('even')" id="btn-even">
-                    <div class="strategy-name">Even</div>
-                    <div class="strategy-desc">Bet on even digits (0,2,4,6,8)</div>
                 </div>
-                
-                <div class="strategy-btn odd" onclick="selectStrategy('odd')" id="btn-odd">
-                    <div class="strategy-name">Odd</div>
-                    <div class="strategy-desc">Bet on odd digits (1,3,5,7,9)</div>
-                </div>
-                
-                <div class="strategy-btn over" onclick="selectStrategy('over')" id="btn-over">
-                    <div class="strategy-name">Over</div>
-                    <div class="strategy-desc">Dominance 1-8 (Over barrier)</div>
-                </div>
-                
-                <div class="strategy-btn under" onclick="selectStrategy('under')" id="btn-under">
-                    <div class="strategy-name">Under</div>
-                    <div class="strategy-desc">Dominance 9-2 (Under barrier)</div>
-                </div>
-                
-                <div class="strategy-btn rise" onclick="selectStrategy('rise')" id="btn-rise">
-                    <div class="strategy-name">Rise</div>
-                    <div class="strategy-desc">Bet on rising price momentum</div>
-                </div>
-                
-                <div class="strategy-btn fall" onclick="selectStrategy('fall')" id="btn-fall">
-                    <div class="strategy-name">Fall</div>
-                    <div class="strategy-desc">Bet on falling price momentum</div>
-                </div>
-            </div>
 
             <div class="mt-4 space-y-3">
                 <button onclick="goTo(3)" class="w-full py-4 rounded-xl font-bold text-lg bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg transition-all active:scale-95">
@@ -519,23 +243,33 @@
         </div>
 
         <div id="screen-3" class="screen fade-in no-scrollbar relative">
-            
             <div id="sync-indicator" class="sync-indicator">
-                <div class="sync-spinner"></div>
-                <div class="text-cyan-400 text-sm font-bold">Syncing 50 ticks...</div>
+                <div class="text-cyan-400 text-sm font-bold">Syncing ticks...</div>
             </div>
-
             <div class="flex justify-center mb-4 mt-2">
                 <div class="signal-box text-white border-cyan-400">
-                    <div class="text-xs opacity-50 uppercase tracking-widest">Signal Status</div>
                     <div id="status-display" class="text-2xl font-bold mt-4">OFFLINE</div>
                 </div>
             </div>
-            <button onclick="goTo(2)" class="mt-4 text-gray-400 text-center w-full">Change Strategy</button>
         </div>
     </div>
 
     <script>
         let state = { index: 'R_10', strategy: null };
         function goTo(n) {
-            document.querySelector
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + n).classList.add('active');
+        }
+        function selectStrategy(s) {
+            state.strategy = s;
+            document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + s).classList.add('active');
+        }
+        function toggleWS() {
+            const dot = document.getElementById('ws-dot');
+            dot.classList.toggle('connected');
+            dot.classList.toggle('disconnected');
+        }
+    </script>
+</body>
+</html>
