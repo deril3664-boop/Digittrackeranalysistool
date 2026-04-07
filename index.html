@@ -3,170 +3,564 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AimagicsPro - Success Connection</title>
+    <title>AimagicsPro - Binary Options</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; box-sizing: border-box; }
-        html, body { font-family: 'Inter', sans-serif; background: #000; color: white; width: 100%; height: 100%; overflow: hidden; margin: 0; }
-        #app { width: 100%; height: 100%; display: flex; flex-direction: column; background: #0a0a0a; }
-        .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .screen.active { display: flex; }
-        .neon-text { text-shadow: 0 0 10px #00d4ff; color: #00d4ff; }
-        .custom-select { background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 15px; width: 100%; color: white; outline: none; }
-        .strategy-btn { background: #111; border: 2px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .strategy-btn.active { border-color: #00d4ff; background: #002b36; }
-        .digit-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 20px 0; }
-        .digit-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; text-align: center; transition: 0.2s; }
-        .digit-card.active { border-color: #00d4ff; background: #00d4ff22; transform: scale(1.1); box-shadow: 0 0 10px #00d4ff; }
-        .ws-status { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4444; }
-        .dot.connected { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
-        .btn-main { background: #00d4ff; color: #000; font-weight: 900; padding: 18px; border-radius: 14px; width: 100%; text-transform: uppercase; }
-        #sync-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+        
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background: #000; 
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #app {
+            width: 100%;
+            height: 100%;
+            background: #0f0f0f;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Neon Effects */
+        .neon-border {
+            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor;
+        }
+        
+        /* Strategy Buttons - Vertical Layout */
+        .strategy-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .strategy-btn {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .strategy-btn:hover {
+            border-color: #00d4ff;
+            background: #0c4a6e;
+            transform: translateX(5px);
+        }
+        
+        .strategy-btn.active {
+            border-color: #00d4ff;
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .strategy-btn.matches.active { border-color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+        .strategy-btn.differs.active { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        .strategy-btn.even.active { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        .strategy-btn.odd.active { border-color: #f97316; box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
+        .strategy-btn.over.active { border-color: #eab308; box-shadow: 0 0 20px rgba(234, 179, 8, 0.4); }
+        .strategy-btn.under.active { border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        .strategy-btn.rise.active { border-color: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .strategy-btn.fall.active { border-color: #dc2626; box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
+        
+        .strategy-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .strategy-desc {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        /* Custom select */
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+        }
+        
+        /* Signal Box - 320px centered */
+        .signal-box {
+            width: 320px;
+            max-width: 90%;
+            margin: 0 auto;
+            border: 2px solid;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+            will-change: transform, box-shadow;
+        }
+        
+        .signal-box.active {
+            animation: pulse-border 1s infinite alternate;
+        }
+        
+        @keyframes pulse-border {
+            from { box-shadow: 0 0 10px currentColor; }
+            to { box-shadow: 0 0 30px currentColor, 0 0 50px currentColor; }
+        }
+        
+        /* Countdown Ring */
+        .countdown-ring {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: conic-gradient(currentColor var(--progress), transparent 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.2);
+            will-change: background;
+        }
+        
+        .countdown-ring::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #000;
+            border-radius: 50%;
+        }
+        
+        .countdown-ring span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Deep Analysis Timer - New */
+        .analysis-timer {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: conic-gradient(#ff006e var(--progress), transparent 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            border: 3px solid rgba(255, 0, 110, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+            will-change: background;
+            display: none;
+        }
+        
+        .analysis-timer.show {
+            display: flex;
+        }
+        
+        .analysis-timer::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: #000;
+            border-radius: 50%;
+        }
+        
+        .analysis-timer span {
+            position: relative;
+            z-index: 1;
+            color: #ff006e;
+        }
+        
+        .analysis-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: #ff006e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: none;
+        }
+        
+        .analysis-timer.show + .analysis-label,
+        .analysis-label.show {
+            display: block;
+        }
+        
+        /* Run button */
+        .btn-run {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            border: none;
+            color: #000;
+            font-weight: 800;
+            letter-spacing: 1px;
+            will-change: transform;
+        }
+        
+        .btn-run.running {
+            background: linear-gradient(135deg, #ff006e 0%, #cc0055 100%);
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+            color: white;
+        }
+        
+        .btn-run:active {
+            transform: scale(0.97);
+        }
+        
+        /* Digit Grid Cards */
+        .digit-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .digit-card {
+            position: relative;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 12px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            will-change: transform, box-shadow, border-color;
+        }
+        
+        .digit-card.active {
+            border-color: #00d4ff;
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .digit-card.highlight-green {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+            animation: pulse-green 1s infinite alternate;
+        }
+        
+        .digit-card.highlight-red {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            animation: pulse-red 1s infinite alternate;
+        }
+        
+        .digit-card.highlight-blue {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+        }
+        
+        .digit-card.highlight-orange {
+            border-color: #f97316;
+            background: linear-gradient(135deg, #7c2d12 0%, #9a3412 100%);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
+        }
+        
+        .digit-card.highlight-yellow {
+            border-color: #eab308;
+            background: linear-gradient(135deg, #713f12 0%, #854d0e 100%);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
+        }
+        
+        .digit-card.highlight-purple {
+            border-color: #a855f7;
+            background: linear-gradient(135deg, #581c87 0%, #6b21a8 100%);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+        }
+        
+        .digit-card.analyzing {
+            animation: analyzing-pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes analyzing-pulse {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+        
+        @keyframes pulse-green {
+            from { box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+            to { box-shadow: 0 0 25px rgba(34, 197, 94, 0.8); }
+        }
+        
+        @keyframes pulse-red {
+            from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+            to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+        }
+        
+        /* Triangle indicator */
+        .triangle {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid #dc2626;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            animation: bounce 0.6s infinite alternate;
+            display: none;
+        }
+        
+        .triangle.show {
+            display: block;
+        }
+        
+        @keyframes bounce {
+            from { transform: translateX(-50%) translateY(0); }
+            to { transform: translateX(-50%) translateY(-5px); }
+        }
+        
+        /* WS status dot */
+        .ws-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .ws-dot.connected { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .ws-dot.connecting { background: #ffaa00; animation: pulse 1s infinite; }
+        .ws-dot.disconnected { background: #ff0044; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Scrollbar hide */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Confidence Score */
+        .confidence-score {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 10px 0;
+        }
+        
+        .confidence-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+        
+        /* Market Label */
+        .market-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        /* Signal Text */
+        .signal-text-main {
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+        
+        .signal-subtext {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        /* Analysis status text */
+        .analysis-status {
+            font-size: 11px;
+            color: #ff006e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            display: none;
+        }
+        
+        .analysis-status.show {
+            display: block;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* Tick indicator */
+        .tick-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff88;
+            box-shadow: 0 0 5px #00ff88;
+            animation: tick-pulse 0.5s ease-out;
+        }
+        
+        @keyframes tick-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
     </style>
 </head>
 <body>
-
-<div id="app">
-    <header class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900">
-        <h1 class="font-black tracking-tighter neon-text">AIMAGICS PRO</h1>
-        <div class="ws-status">
-            <div id="ws-dot" class="dot"></div>
-            <span id="ws-state">Offline</span>
-        </div>
-    </header>
-
-    <div id="sync-overlay">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-cyan-400 mx-auto mb-4"></div>
-            <p class="text-cyan-400 font-bold">Establishing Strong Connection...</p>
-        </div>
-    </div>
-
-    <div id="screen-1" class="screen active">
-        <h2 class="text-xl font-bold mb-4">Select Index</h2>
-        <select id="market-select" class="custom-select mb-6">
-            <option value="R_10">Volatility 10 Index</option>
-            <option value="R_100">Volatility 100 Index</option>
-            <option value="1HZ10V">Volatility 10 (1s)</option>
-            <option value="1HZ100V">Volatility 100 (1s)</option>
-        </select>
-        <button onclick="nav(2)" class="btn-main mt-auto">Continue</button>
-    </div>
-
-    <div id="screen-2" class="screen">
-        <h2 class="text-xl font-bold mb-4">Select Strategy</h2>
-        <div class="strategy-btn active" id="s-matches" onclick="setStrat('matches')">Matches / Differs</div>
-        <div class="strategy-btn" id="s-even" onclick="setStrat('even')">Even / Odd</div>
-        <div class="strategy-btn" id="s-over" onclick="setStrat('over')">Over / Under</div>
-        <button onclick="nav(3)" class="btn-main mt-auto">Start Analysis</button>
-    </div>
-
-    <div id="screen-3" class="screen">
-        <div class="bg-gray-900 p-6 rounded-2xl border border-cyan-500/30 text-center mb-4">
-            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Market Probability</p>
-            <div id="signal-display" class="text-3xl font-black">ANALYZING...</div>
-        </div>
+    <div id="app">
         
-        <div class="digit-grid" id="digit-display">
+        <!-- Header -->
+        <header class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between flex-shrink-0 border-b border-gray-800">
+            <h1 class="text-lg font-bold tracking-wider text-cyan-400 neon-text" style="color: #00d4ff;">AIMAGICS<span class="text-white">PRO</span></h1>
+            <div class="flex items-center gap-3">
+                <div id="ws-dot" class="ws-dot disconnected"></div>
+                <button onclick="toggleWS()" id="ws-btn" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded border border-gray-600 transition-all">
+                    Connect
+                </button>
             </div>
+        </header>
 
-        <button onclick="nav(1)" class="text-gray-600 text-xs text-center mt-auto">Disconnect & Exit</button>
-    </div>
-</div>
+        <!-- Status Bar -->
+        <div class="bg-black px-4 py-2 flex items-center justify-between flex-shrink-0 border-b border-gray-800">
+            <span id="ws-text" class="text-xs font-semibold text-gray-500">Disconnected</span>
+            <span class="text-xs text-gray-600">8 Strategies | App ID: 131595</span>
+        </div>
 
-<script>
-    let ws = null;
-    let ticks = [];
-    let currentStrat = 'matches';
-    let heartbeat = null;
-
-    function nav(s) {
-        document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
-        document.getElementById(`screen-${s}`).classList.add('active');
-        if (s === 3) startEngine();
-    }
-
-    function setStrat(s) {
-        currentStrat = s;
-        document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`s-${s}`).classList.add('active');
-    }
-
-    function startEngine() {
-        if (ws) ws.close();
-        const symbol = document.getElementById('market-select').value;
-        const overlay = document.getElementById('sync-overlay');
-        
-        overlay.style.display = 'flex';
-        
-        // Connecting with App ID 131595
-        ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=131595');
-
-        ws.onopen = () => {
-            document.getElementById('ws-dot').classList.add('connected');
-            document.getElementById('ws-state').innerText = 'Online';
+        <!-- Screen 1: Market Selection -->
+        <div id="screen-1" class="screen active fade-in">
+            <h2 class="text-2xl font-bold text-white mb-2 mt-4">Select Market</h2>
+            <p class="text-gray-400 text-sm mb-6">Choose volatility index</p>
             
-            // Sync 50 ticks history + subscribe live
-            ws.send(JSON.stringify({ "ticks_history": symbol, "count": 50, "end": "latest", "style": "ticks" }));
-            ws.send(JSON.stringify({ "ticks": symbol, "subscribe": 1 }));
+            <div class="space-y-4 flex-1">
+                <select id="index-select" onchange="state.index=this.value" class="custom-select w-full bg-gray-900 border-2 border-gray-700 rounded-xl py-4 px-4 text-white font-semibold text-lg focus:border-cyan-400 focus:outline-none transition-all">
+                    <option value="R_10">Volatility 10 Index</option>
+                    <option value="R_25">Volatility 25 Index</option>
+                    <option value="R_50">Volatility 50 Index</option>
+                    <option value="R_75">Volatility 75 Index</option>
+                    <option value="R_100">Volatility 100 Index</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ25V">Volatility 25 (1s)</option>
+                    <option value="1HZ50V">Volatility 50 (1s)</option>
+                    <option value="1HZ75V">Volatility 75 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
+                </select>
 
-            // Vercel Heartbeat (20s)
-            if(heartbeat) clearInterval(heartbeat);
-            heartbeat = setInterval(() => ws.send(JSON.stringify({ping: 1})), 20000);
-        };
+                <div class="mt-8 space-y-3">
+                    <button onclick="goTo(2)" class="w-full py-4 rounded-xl font-bold text-lg bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg transition-all active:scale-95 neon-border" style="color: #000;">
+                        PROCEED →
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        ws.onmessage = (msg) => {
-            const data = JSON.parse(msg.data);
-            if (data.msg_type === 'history') {
-                overlay.style.display = 'none';
-                ticks = data.history.prices;
-                processData();
-            }
-            if (data.tick) {
-                ticks.push(data.tick.quote);
-                if (ticks.length > 50) ticks.shift();
-                processData();
-            }
-        };
-
-        ws.onclose = () => {
-            document.getElementById('ws-dot').classList.remove('connected');
-            document.getElementById('ws-state').innerText = 'Offline';
-        };
-    }
-
-    function processData() {
-        if (ticks.length === 0) return;
-        const lastPrice = ticks[ticks.length - 1].toString();
-        const lastDigit = lastPrice.slice(-1);
-        
-        // Update Digit Grid
-        const grid = document.getElementById('digit-display');
-        grid.innerHTML = '';
-        for (let i = 0; i <= 9; i++) {
-            const active = (i == lastDigit) ? 'active' : '';
-            grid.innerHTML += `<div class="digit-card ${active}">${i}</div>`;
-        }
-
-        // Strategy Logic
-        const signal = document.getElementById('signal-display');
-        let evens = ticks.filter(t => t.toString().slice(-1) % 2 === 0).length;
-        let evenProb = Math.round((evens / ticks.length) * 100);
-
-        if (evenProb > 60) {
-            signal.innerText = "BUY EVEN";
-            signal.style.color = "#00ff88";
-        } else if (evenProb < 40) {
-            signal.innerText = "BUY ODD";
-            signal.style.color = "#ff4444";
-        } else {
-            signal.innerText = "NEUTRAL";
-            signal.style.color = "#ffffff";
-        }
-    }
-</script>
-
-</body>
-</html>
+        <!-- Screen 2: Strategy Selection - All 8 Vertical -->
+        <div id="screen-2" class="screen fade-in">
+            <h2 class="text-2xl font-bold text-white mb-2 mt-4">Select Strategy</h2>
+            <p class="text-gray-400 text-sm mb-4">Choose your trading approach</p>
+            
+            <div class="strategy-grid flex-1 overflow-y-auto no-scrollbar">
+                <!-- 1. Matches -->
+                <div class="strategy-btn matches" onclick="selectStrategy('matches')" id="btn-matches">
+                    <div class="strategy-name">Matches</div>
+                    <div class="strategy-desc">Bet on the most frequent digit</div>
+                </div>
+                
+                <!-- 2. Differs -->
+                <div class="strategy-btn differs" onclick="selectStrategy('differs')" id="btn-differs">
+                    <div class="strategy-name">Differs</div>
+                    <div class="strategy-desc">Bet against the least frequent digit</div>
+                </div>
+                
+                <!-- 3. Even -->
+                <div class="strategy-btn even" onclick="selectStrategy('even')" id="btn-even">
+                    <div class="strategy-name">Even</div>
+                    <div class="strategy-desc">Bet on even digits (0,2,4,6,8)</div>
+                </div>
+                
+                <!-- 4. Odd -->
+                <div class="strategy-btn odd" onclick="selectStrategy('odd')" id="btn-odd">
+                    <div class="strategy-name">Odd</div>
+                    <div class="strategy-desc">Bet on odd digits (1,3,5,7,9)</div>
+                </div>
+                
+                <!-- 5. Over -->
+                <div class="strategy-btn over" onclick="selectStrategy('over')" id="btn-over">
+                    <div class="strategy-name">Over</div>
+                    <div class="strategy-desc">Dominance 1-8 (Over barrier)</div>
+                </div>
+                
+                <!-- 6. Under -->
+                <div class="strategy-btn under" onclick="selectStrategy('under')" id="btn-under">
+                    <div class="strategy-name">Under</div>
+                    <div class="strategy-desc">Dominance 9-2 (Under barrier)</div>
+                </div>
+                
+                <!-- 7. Rise -->
+                <div class="strategy-btn rise" onclick="selectStrategy('rise')" id="btn-rise">
+                    <div class="strategy-name">Rise</div>
+                    <div class="strategy-desc">Bet on rising price momentum</div>
